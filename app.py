@@ -8,16 +8,16 @@ import re
 # --- CẤU HÌNH TRANG ---
 st.set_page_config(page_title="Smart Automation Hub", layout="wide")
 
-# --- LẤY API KEYS TỪ SECRETS ---
+# --- LẤY API KEYS ---
 try:
     api_key = st.secrets["GEMINI_API_KEY"]
     hf_token = st.secrets["HF_TOKEN"]
     genai.configure(api_key=api_key)
 except:
-    st.error("❌ Thiếu API Key trong Secrets. Vui lòng kiểm tra GEMINI_API_KEY và HF_TOKEN.")
+    st.error("❌ Thiếu API Key! Vui lòng kiểm tra GEMINI_API_KEY và HF_TOKEN trong Secrets.")
     st.stop()
 
-# --- QUẢN LÝ TÀI KHOẢN ---
+# --- QUẢN LÝ TÀI KHOẢN (JSON) ---
 def save_accounts(accounts):
     with open('accounts.json', 'w', encoding='utf-8') as f:
         json.dump(accounts, f, ensure_ascii=False, indent=4)
@@ -30,118 +30,136 @@ def load_accounts():
         except: return {}
     return {}
 
-# Khởi tạo trạng thái hệ thống
+# Khởi tạo Session State
 if 'accounts' not in st.session_state: st.session_state.accounts = load_accounts()
 if 'content' not in st.session_state: st.session_state.content = ""
 if 'prompt' not in st.session_state: st.session_state.prompt = ""
 if 'image_result' not in st.session_state: st.session_state.image_result = None
 
-# --- SIDEBAR: CHỌN FACEBOOK ---
+# --- SIDEBAR: QUẢN LÝ TÀI KHOẢN & AVATAR ---
 with st.sidebar:
-    st.header("👤 Tài khoản làm việc")
+    st.header("👤 Hệ thống Tài khoản")
+    
+    # 1. Thêm mới tài khoản
+    with st.expander("➕ Thêm/Sửa Facebook", expanded=not st.session_state.accounts):
+        name = st.text_input("Tên Facebook (VD: Nick Chinh)")
+        fb_id = st.text_input("ID Facebook")
+        avatar_url = st.text_input("URL Avatar mẫu (Drive/Web)")
+        cookie = st.text_area("Cookies")
+        if st.button("Lưu vào hệ thống"):
+            if name and cookie:
+                st.session_state.accounts[name] = {
+                    "id": fb_id,
+                    "avatar": avatar_url,
+                    "cookies": cookie
+                }
+                save_accounts(st.session_state.accounts)
+                st.success(f"Đã lưu {name}!")
+                st.rerun()
+            else: st.error("Thiếu tên hoặc cookies!")
+
+    st.divider()
+
+    # 2. Chọn tài khoản làm việc
     if st.session_state.accounts:
         fb_list = list(st.session_state.accounts.keys())
-        st.session_state.selected_fb = st.selectbox("Chọn Facebook:", fb_list)
+        selected = st.selectbox("🎯 Chọn tài khoản đang chạy:", fb_list)
+        st.session_state.selected_fb = selected
+        
+        # Hiển thị thông tin nhanh của tài khoản đang chọn
+        acc = st.session_state.accounts[selected]
+        st.info(f"ID: {acc['id']}")
+        if acc['avatar']:
+            st.image(acc['avatar'], caption="Avatar chuẩn nhận diện", width=100)
     else:
-        st.warning("Hãy thêm tài khoản ở nút bên dưới.")
-    
-    with st.expander("➕ Thêm mới/Cập nhật"):
-        name = st.text_input("Tên FB")
-        cookie = st.text_area("Cookies")
-        if st.button("Lưu"):
-            if name and cookie:
-                st.session_state.accounts[name] = {"cookies": cookie}
-                save_accounts(st.session_state.accounts)
-                st.rerun()
+        st.warning("Chưa có dữ liệu tài khoản.")
 
-# --- GIAO DIỆN CHÍNH ---
-st.title("🚀 Smart Content Hub v2.5")
-tab1, tab2, tab3 = st.tabs(["📝 Bước 1: Tạo Content", "🎨 Bước 2: Tạo Ảnh Pro", "📤 Bước 3: Đăng Bài"])
+# --- MÀN HÌNH CHÍNH ---
+st.title("🚀 Smart Content Hub v2.6")
+tab1, tab2, tab3 = st.tabs(["📝 Bước 1: Tạo Content", "🎨 Bước 2: Tạo Ảnh AI", "📤 Bước 3: Đăng Bài"])
 
-# --- BƯỚC 1: TẠO CONTENT ---
+# --- TAB 1: CONTENT ---
 with tab1:
     col_in, col_out = st.columns([1, 1.2])
     
     with col_in:
-        st.subheader("🎯 Nhập ý tưởng")
-        k1 = st.text_input("Chủ đề chính", "Máy lọc nước Hydrogen")
-        k2 = st.text_input("Đối tượng", "Gia đình quan tâm sức khỏe")
-        trend = st.text_input("Bối cảnh/Trend", "Cuối tuần sum họp")
+        st.subheader("🎯 Ý tưởng hôm nay")
+        k1 = st.text_input("Chủ đề bài đăng", "Giải pháp AI cá nhân")
+        k2 = st.text_input("Khách hàng mục tiêu", "Người kinh doanh online")
+        trend = st.text_input("Trend/Bối cảnh", "Công nghệ 2026")
         
-        if st.button("✨ TẠO NỘI DUNG VỚI GEMINI"):
-            with st.spinner("Đang sáng tạo..."):
+        if st.button("✨ TẠO NỘI DUNG VẠN NĂNG"):
+            with st.spinner("Gemini 2.5 Flash đang xử lý..."):
                 try:
                     model = genai.GenerativeModel('gemini-2.5-flash')
                     master_prompt = f"""
                     Bạn là chuyên gia Viral Marketing. Tạo nội dung cho {k1}, khách là {k2}, vibe {trend}.
-                    Định dạng bắt buộc:
-                    [CONTENT]: Nội dung bài đăng (Tiếng Việt, hook mạnh, icon).
-                    [IMAGE_PROMPT]: Đoạn mô tả ảnh chuyên sâu (Tiếng Anh, Realistic, 8k, cinematic).
+                    Yêu cầu tách biệt 2 phần bằng nhãn chính xác:
+                    [CONTENT]: Nội dung bài đăng (Tiếng Việt, ngắn gọn, icon, hashtag).
+                    [IMAGE_PROMPT]: Đoạn mô tả ảnh (Tiếng Anh, Realistic, 8k, cinematic).
                     """
                     response = model.generate_content(master_prompt)
-                    raw_text = response.text
+                    raw = response.text
                     
-                    # Tách nội dung bằng biểu thức chính quy (Regex) để tránh lỗi gộp
-                    content_match = re.search(r"\[CONTENT\]:(.*?)(?=\[IMAGE_PROMPT\]|$)", raw_text, re.S)
-                    prompt_match = re.search(r"\[IMAGE_PROMPT\]:(.*)", raw_text, re.S)
+                    # Logic tách nội dung cải tiến (Tìm kiếm linh hoạt)
+                    c_part = re.search(r"\[CONTENT\](.*?)(?=\[IMAGE_PROMPT\]|$)", raw, re.S | re.I)
+                    p_part = re.search(r"\[IMAGE_PROMPT\](.*)", raw, re.S | re.I)
                     
-                    st.session_state.content = content_match.group(1).strip() if content_match else raw_text
-                    st.session_state.prompt = prompt_match.group(1).strip() if prompt_match else ""
-                    st.success("Đã tạo xong!")
+                    st.session_state.content = c_part.group(1).strip(": \n") if c_part else raw
+                    st.session_state.prompt = p_part.group(1).strip(": \n") if p_part else ""
+                    st.success("Tách dữ liệu thành công!")
                 except Exception as e:
-                    st.error(f"Lỗi: {e}")
+                    st.error(f"Lỗi API: {e}")
 
     with col_out:
-        st.subheader("✒️ Chỉnh sửa & Sao chép")
-        st.session_state.content = st.text_area("Bài đăng Facebook:", st.session_state.content, height=250)
+        st.subheader("🖋️ Kiểm tra & Copy")
+        # Ô nội dung bài viết
+        st.session_state.content = st.text_area("Nội dung bài đăng:", st.session_state.content, height=250)
+        st.write("*(Di chuột vào khung dưới, bấm nút Copy ở góc phải)*")
+        st.code(st.session_state.content, language="text")
         
-        # Ô Prompt có nút copy nhanh (Streamlit tự có nút copy ở góc trên bên phải st.code)
-        st.write("**Prompt tạo ảnh (Copy sang Bước 2):**")
+        st.divider()
+        
+        # Ô Prompt ảnh
+        st.write("**Prompt tạo ảnh (Sẽ tự động chuyển sang Bước 2):**")
+        st.session_state.prompt = st.text_area("Chỉnh sửa Prompt nếu cần:", st.session_state.prompt, height=100)
         st.code(st.session_state.prompt, language="text")
-        
-        if st.button("✅ CHỐT NỘI DUNG"):
-            st.toast("Dữ liệu đã sẵn sàng!")
 
-# --- BƯỚC 2: TẠO ẢNH ---
+# --- TAB 2: TẠO ẢNH ---
 with tab2:
     st.subheader("🎨 Studio Tạo Ảnh AI")
     c1, c2 = st.columns([1, 1])
     
     with c1:
-        # CHỨC NĂNG AVATAR CỐ ĐỊNH (MỚI)
-        st.markdown("### 🖼️ Cài đặt Avatar")
-        avatar_type = st.radio("Nguồn Avatar:", ["Dùng Link URL", "Tải tệp lên"], horizontal=True)
-        if avatar_type == "Dùng Link URL":
-            st.text_input("Dán link ảnh (Google Drive/Public):", key="avatar_url")
+        # Tự động lấy Avatar từ Sidebar
+        if 'selected_fb' in st.session_state and st.session_state.accounts[st.session_state.selected_fb]['avatar']:
+            current_avatar = st.session_state.accounts[st.session_state.selected_fb]['avatar']
+            st.success(f"✅ Đang sử dụng Avatar của: {st.session_state.selected_fb}")
+            st.image(current_avatar, width=150)
         else:
-            st.file_uploader("Chọn ảnh từ máy tính", type=['jpg', 'png', 'jpeg'], key="avatar_file")
+            st.warning("⚠️ Tài khoản này chưa có URL Avatar trong Sidebar.")
         
         st.divider()
-        input_prompt = st.text_area("Dán/Chỉnh sửa Prompt tại đây:", st.session_state.prompt, height=150)
+        # Lấy prompt từ bước 1 sang
+        final_prompt = st.text_area("Xác nhận Prompt vẽ ảnh:", st.session_state.prompt, height=150)
         
-        if st.button("🎨 VẼ ẢNH NGAY"):
-            with st.spinner("Đang vẽ ảnh với FLUX.1 (Hugging Face)..."):
+        if st.button("🎨 VẼ ẢNH VỚI FLUX.1"):
+            with st.spinner("Hugging Face đang vẽ..."):
                 try:
                     API_URL = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
                     headers = {"Authorization": f"Bearer {hf_token}"}
-                    response = requests.post(API_URL, headers=headers, json={"inputs": input_prompt})
-                    
+                    response = requests.post(API_URL, headers=headers, json={"inputs": final_prompt})
                     if response.status_code == 200:
                         st.session_state.image_result = response.content
                         st.success("Vẽ xong!")
-                    else:
-                        st.error(f"Lỗi từ Hugging Face: {response.status_code}")
-                except Exception as e:
-                    st.error(f"Lỗi kết nối: {e}")
+                    else: st.error("Server AI đang bận, thử lại sau vài giây.")
+                except Exception as e: st.error(f"Lỗi: {e}")
 
     with c2:
-        st.markdown("### 👁️ Xem trước")
         if st.session_state.image_result:
-            st.image(st.session_state.image_result, use_container_width=True)
-            st.download_button("📥 Tải ảnh về", st.session_state.image_result, "post_image.png", "image/png")
-        else:
-            st.info("Ảnh sẽ hiện ở đây sau khi bạn nhấn 'Vẽ ảnh ngay'.")
+            st.image(st.session_state.image_result, caption="Ảnh AI đã tạo", use_container_width=True)
+            st.download_button("📥 Tải ảnh về", st.session_state.image_result, "post.png", "image/png")
 
-# --- BƯỚC 3: ĐĂNG BÀI ---
+# --- TAB 3: ĐĂNG BÀI ---
 with tab3:
-    st.info("Module Bước 3: Đang chờ thiết lập Robot đăng bài (Playwright).")
+    st.info("Chuẩn bị tích hợp Robot đăng bài tự động...")
