@@ -24,15 +24,26 @@ def copy_button(text_to_copy, button_label="Copy"):
     """
     return components.html(code, height=45)
 
-# --- HÀM XỬ LÝ LINK ẢNH (Google Drive & Trực tiếp) ---
-def get_direct_img_url(url):
-    if not url: return ""
+# --- HÀM TẢI VÀ HIỂN THỊ ẢNH AN TOÀN (VƯỢT LỖI CORS/REDIRECT) ---
+def safe_display_image(url, width=None):
+    if not url: return
+    # Xử lý tự động link Google Drive
     if "drive.google.com" in url:
         file_id = ""
         if "/file/d/" in url: file_id = url.split("/file/d/")[1].split("/")[0]
         elif "id=" in url: file_id = url.split("id=")[1].split("&")[0]
-        if file_id: return f"https://drive.google.com/uc?export=download&id={file_id}"
-    return url
+        if file_id: url = f"https://drive.google.com/uc?export=download&id={file_id}"
+        
+    try:
+        # Tải ảnh về máy chủ bằng Requests với User-Agent chuẩn
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+        res = requests.get(url, headers=headers, allow_redirects=True, timeout=10)
+        if res.status_code == 200:
+            st.image(res.content, width=width)
+        else:
+            st.warning(f"Bị chặn hiển thị (Mã {res.status_code})")
+    except Exception:
+        st.warning("Lỗi tải ảnh.")
 
 # --- LẤY API KEYS ---
 try:
@@ -40,7 +51,7 @@ try:
     HF_TOKEN = st.secrets["HF_TOKEN"]
     genai.configure(api_key=GEMINI_API_KEY)
 except:
-    st.error("❌ Thiếu GEMINI_API_KEY hoặc HF_TOKEN trong thiết lập Secrets!")
+    st.error("❌ Thiếu API Key trong thiết lập Secrets!")
     st.stop()
 
 # --- QUẢN LÝ DỮ LIỆU ---
@@ -58,7 +69,7 @@ def load_accounts():
 
 if 'accounts' not in st.session_state: st.session_state.accounts = load_accounts()
 
-# --- HÀM QUÉT INFO FB ---
+# --- HÀM QUÉT INFO FB (CẢI TIẾN CHỐNG SẬP) ---
 def fetch_fb_profile(cookie_str):
     try:
         uid_match = re.search(r'c_user=(\d+)', cookie_str)
@@ -67,42 +78,51 @@ def fetch_fb_profile(cookie_str):
 
         avatar = f"https://graph.facebook.com/{uid}/picture?type=large"
         
-        headers = {'cookie': cookie_str, 'user-agent': 'Mozilla/5.0'}
-        res = requests.get(f"https://mbasic.facebook.com/{uid}", headers=headers, timeout=10)
-        name_match = re.search(r'<title>(.*?)</title>', res.text)
-        name = name_match.group(1) if name_match else f"User {uid}"
-        if "Facebook" in name: name = name.replace("Facebook", "").strip(" | -")
+        # Đặt tên mặc định nếu bị FB chặn lấy dữ liệu
+        name = f"User {uid}"
+        try:
+            headers = {'cookie': cookie_str, 'user-agent': 'Mozilla/5.0'}
+            res = requests.get(f"https://mbasic.facebook.com/{uid}", headers=headers, timeout=5)
+            name_match = re.search(r'<title>(.*?)</title>', res.text)
+            if name_match:
+                extracted_name = name_match.group(1).replace("Facebook", "").strip(" | -")
+                if extracted_name and "Không tìm thấy" not in extracted_name:
+                    name = extracted_name
+        except:
+            pass # Vẫn giữ nguyên User UID, không báo lỗi đỏ
 
         return name, uid, avatar
     except Exception as e:
-        return f"Lỗi quét: {e}", uid if 'uid' in locals() else "", ""
+        return "Lỗi Hệ Thống", "", ""
 
-# --- SIDEBAR ---
+# --- SIDEBAR: TRẠM TUÂN THỦ THÔNG MINH ---
 with st.sidebar:
     st.header("👤 Smart Compliance Hub")
     
-    with st.expander("🛠️ Quản lý Tài khoản", expanded=True):
+    with st.expander("🛠️ Quản lý Tài khoản FB", expanded=True):
         input_cookie = st.text_area("Dán Cookies FB:", height=70)
         if st.button("🔍 Check & Auto-fill Profile"):
             n, u, a = fetch_fb_profile(input_cookie)
             st.session_state.tmp_name, st.session_state.tmp_uid, st.session_state.tmp_avatar = n, u, a
-            st.success(f"Nhận diện: {n}")
+            if u: st.success(f"Nhận diện UID: {u}")
+            else: st.error("Lỗi: Không tìm thấy ID tài khoản.")
 
         f_name = st.text_input("Tên FB:", st.session_state.get('tmp_name', ""))
         f_uid = st.text_input("UID:", st.session_state.get('tmp_uid', ""))
         f_avatar = st.text_input("Link Avatar:", st.session_state.get('tmp_avatar', ""))
         
-        if f_avatar: st.image(get_direct_img_url(f_avatar), width=80)
+        if f_avatar: 
+            safe_display_image(f_avatar, width=80)
 
         st.divider()
         st.write("**Nhân vật mẫu (Cho AI):**")
         char_url = st.text_input("Link Ảnh mẫu (Drive/Web):")
-        char_file = st.file_uploader("Hoặc tải lên:", type=['jpg', 'png'])
+        char_file = st.file_uploader("Hoặc tải lên (Ưu tiên):", type=['jpg', 'png'])
         
         if char_file: 
             st.image(char_file, width=150)
         elif char_url:
-            st.image(get_direct_img_url(char_url), width=150)
+            safe_display_image(char_url, width=150)
 
         if st.button("💾 LƯU TÀI KHOẢN"):
             if f_name and input_cookie:
@@ -112,14 +132,15 @@ with st.sidebar:
                     "cookies": input_cookie
                 }
                 save_accounts(st.session_state.accounts)
-                st.success("Đã lưu!")
+                st.success("Đã lưu vào bộ nhớ tạm của Server!")
                 st.rerun()
 
     st.divider()
     if st.session_state.accounts:
         st.session_state.selected_fb = st.selectbox("🎯 Chọn Nick làm việc:", list(st.session_state.accounts.keys()))
         acc = st.session_state.accounts[st.session_state.selected_fb]
-        if acc['avatar']: st.image(get_direct_img_url(acc['avatar']), width=60)
+        if acc['avatar']: 
+            safe_display_image(acc['avatar'], width=60)
     else: st.session_state.selected_fb = None
 
 # --- MAIN ---
