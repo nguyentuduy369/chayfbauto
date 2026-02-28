@@ -74,14 +74,17 @@ def generate_with_key_rotation(prompt_data):
             else: raise e
 
 # --- QUẢN LÝ DỮ LIỆU & MÃ HÓA ẢNH ---
-def save_accounts(accounts):
-    with open('accounts.json', 'w', encoding='utf-8') as f:
-        json.dump(accounts, f, ensure_ascii=False, indent=4)
+import json
+import os
 
-def load_accounts():
-    if os.path.exists('accounts.json'):
+def save_json(data, filename):
+    with open(filename, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+def load_json(filename):
+    if os.path.exists(filename):
         try:
-            with open('accounts.json', 'r', encoding='utf-8') as f: return json.load(f)
+            with open(filename, 'r', encoding='utf-8') as f: return json.load(f)
         except: return {}
     return {}
 
@@ -90,7 +93,8 @@ def image_to_base64(uploaded_file):
         return f"data:image/png;base64,{base64.b64encode(uploaded_file.getvalue()).decode()}"
     return ""
 
-if 'accounts' not in st.session_state: st.session_state.accounts = load_accounts()
+if 'accounts' not in st.session_state: st.session_state.accounts = load_json('accounts.json')
+if 'fanpages' not in st.session_state: st.session_state.fanpages = load_json('fanpages.json')
 
 # --- SIDEBAR: TRẠM TUÂN THỦ THÔNG MINH ---
 with st.sidebar:
@@ -258,44 +262,96 @@ with tab2:
             st.download_button("📥 Tải ảnh chuẩn (9:16)", st.session_state.img_res, "viral_post_9_16.png", "image/png")
 
 with tab3:
-    st.header("📤 Trạm Đăng Bài (Meta Graph API - Tuân Thủ 100%)")
-    st.info("💡 Ngã rẽ 1: Đăng tự động lên Fanpage bằng API chính thức. Không cần giả lập trình duyệt, không rủi ro Checkpoint.")
+    st.header("📤 Trạm Xuất Bản Nội Dung (Smart Compliance Hub)")
     
-    # Cấu hình API Fanpage
-    col_cfg1, col_cfg2 = st.columns(2)
-    with col_cfg1:
-        page_id = st.text_input("Nhập Page ID (Của Fanpage):", placeholder="VD: 123456789012345")
-    with col_cfg2:
-        page_token = st.text_input("Nhập Page Access Token:", type="password", placeholder="EAAI...")
-
-    col_l, col_r = st.columns([1, 1.5])
-    with col_l:
-        if st.button("🚀 BẮN DỮ LIỆU LÊN FANPAGE"):
-            if not st.session_state.get('content') or not st.session_state.get('img_res'):
-                st.error("❌ Vui lòng tạo Bài viết và Hình ảnh trước!")
-            elif not page_id or not page_token:
-                st.error("❌ Vui lòng nhập Page ID và Token của Fanpage!")
-            else:
-                with st.spinner("Đang truyền dữ liệu qua máy chủ Meta..."):
-                    try:
-                        url = f"https://graph.facebook.com/v19.0/{page_id}/photos"
-                        payload = {'message': st.session_state.content, 'access_token': page_token}
-                        files = {'source': ('image.png', st.session_state.img_res, 'image/png')}
-                        
-                        res = requests.post(url, data=payload, files=files)
-                        data = res.json()
-                        
-                        if 'id' in data:
-                            st.success(f"✅ BÙM! Đã đăng thành công lên Fanpage. Post ID: {data['id']}")
-                            st.balloons()
-                        else:
-                            err_msg = data.get('error', {}).get('message', 'Lỗi không xác định')
-                            st.error(f"❌ Meta từ chối: {err_msg}")
-                    except Exception as e:
-                        st.error(f"Lỗi hệ thống: {e}")
-                        
+    # Lời khuyên tuân thủ pháp lý / An toàn tài khoản
+    st.info("""
+    **💡 KHUYẾN CÁO TỪ TRẠM TUÂN THỦ THÔNG MINH:**
+    Nền tảng Meta (Facebook) có hệ thống AI quét hành vi rất khắt khe. 
+    - **Nick Cá Nhân:** Việc dùng Bot giả lập đăng bài sẽ bị AI quét là "Hành vi bất thường/Bị hack", dẫn đến khóa Checkpoint vĩnh viễn. Để bảo vệ tài sản số của bạn, hãy dùng **Phương án 1 (Đăng thủ công)**.
+    - **Fanpage Doanh Nghiệp:** Được Meta cấp phép tự động hóa 100% qua cổng Graph API. Không rủi ro, tốc độ tính bằng mili-giây. Hãy dùng **Phương án 2 (Auto Đăng hàng loạt)**.
+    """)
+    
+    col_l, col_r = st.columns([1.2, 1])
+    
     with col_r:
-        st.markdown("**Bản xem trước Nội dung:**")
+        st.subheader("📱 Bản xem trước & Tải xuống")
+        st.markdown("**Nội dung bài viết:**")
         st.info(st.session_state.get('content', 'Chưa có bài viết...'))
+        
         if st.session_state.get('img_res'):
-            st.image(st.session_state.img_res, width=250)
+            st.image(st.session_state.img_res, use_container_width=True)
+            # Nút tải ảnh dời sang đây cho tiện lợi
+            st.download_button("📥 Tải Hình Ảnh (Chuẩn 9:16)", st.session_state.img_res, "smart_compliance_post.png", "image/png", use_container_width=True)
+        else:
+            st.warning("Chưa có hình ảnh...")
+
+    with col_l:
+        # PHƯƠNG ÁN 1: ĐĂNG THỦ CÔNG
+        st.subheader("🛡️ Phương án 1: Đăng Nick Cá Nhân")
+        st.success("Tải hình ảnh bên cạnh và copy nội dung để đăng lên trang cá nhân của bạn. Mất 10 giây nhưng An toàn tuyệt đối 100%.")
+        
+        st.divider()
+        
+        # PHƯƠNG ÁN 2: AUTO ĐĂNG FANPAGE
+        st.subheader("🚀 Phương án 2: Auto Đăng Fanpage (Meta API)")
+        
+        # Quản lý thêm Fanpage mới
+        with st.expander("➕ Quản lý / Thêm Fanpage Mới"):
+            p_name = st.text_input("Tên Fanpage (Gợi nhớ):", placeholder="VD: Trạm Tuân Thủ - Chi nhánh 1")
+            p_id = st.text_input("Page ID (Dãy số):", placeholder="VD: 123456789012345")
+            p_token = st.text_input("Page Access Token:", type="password", placeholder="EAAI...")
+            
+            if st.button("💾 Lưu Fanpage vào Hệ thống"):
+                if p_name and p_id and p_token:
+                    st.session_state.fanpages[p_name] = {"id": p_id.strip(), "token": p_token.strip()}
+                    save_json(st.session_state.fanpages, 'fanpages.json')
+                    st.success(f"Đã lưu Fanpage '{p_name}' thành công!")
+                    st.rerun()
+                else:
+                    st.error("Vui lòng điền đầy đủ Tên, ID và Token!")
+        
+        # Giao diện Chọn & Đăng hàng loạt
+        if st.session_state.fanpages:
+            selected_pages = st.multiselect(
+                "🎯 Chọn các Fanpage muốn bắn bài viết (Có thể chọn nhiều):", 
+                list(st.session_state.fanpages.keys())
+            )
+            
+            if st.button("🔥 AUTO ĐĂNG LÊN CÁC FANPAGE ĐÃ CHỌN", use_container_width=True):
+                if not st.session_state.get('content') or not st.session_state.get('img_res'):
+                    st.error("❌ Vui lòng tạo Bài viết và Hình ảnh trước khi đăng!")
+                elif not selected_pages:
+                    st.error("❌ Vui lòng tick chọn ít nhất 1 Fanpage để đăng!")
+                else:
+                    with st.status("Đang thực thi chiến dịch tự động hóa...", expanded=True) as status:
+                        success_count = 0
+                        for page in selected_pages:
+                            page_info = st.session_state.fanpages[page]
+                            st.write(f"🔄 Đang đẩy dữ liệu lên: **{page}**...")
+                            try:
+                                url = f"https://graph.facebook.com/v19.0/{page_info['id']}/photos"
+                                payload = {'message': st.session_state.content, 'access_token': page_info['token']}
+                                files = {'source': ('image.png', st.session_state.img_res, 'image/png')}
+                                
+                                res = requests.post(url, data=payload, files=files)
+                                data = res.json()
+                                
+                                if 'id' in data:
+                                    st.write(f"✅ Thành công: {page} (Post ID: {data['id']})")
+                                    success_count += 1
+                                else:
+                                    err_msg = data.get('error', {}).get('message', 'Lỗi không xác định')
+                                    st.write(f"❌ Thất bại: {page} - {err_msg}")
+                            except Exception as e:
+                                st.write(f"❌ Lỗi kết nối {page}: {e}")
+                        
+                        if success_count == len(selected_pages):
+                            status.update(label=f"🎉 Hoàn tất! Đã đăng thành công lên {success_count}/{len(selected_pages)} Fanpage.", state="complete")
+                            st.balloons()
+                        elif success_count > 0:
+                            status.update(label=f"⚠️ Hoàn tất một phần. Đã đăng {success_count}/{len(selected_pages)} Fanpage.", state="warning")
+                        else:
+                            status.update(label="❌ Chiến dịch thất bại. Không thể đăng lên Fanpage nào.", state="error")
+        else:
+            st.warning("Chưa có Fanpage nào trong hệ thống. Vui lòng thêm Fanpage ở mục trên.")
