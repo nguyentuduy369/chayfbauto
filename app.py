@@ -162,20 +162,36 @@ with tab2:
         if st.button("🎨 VẼ ẢNH VỚI GEMINI FLASH"):
             with st.spinner("Đang kết nối API Gemini 3.1 Flash Image..."):
                 try:
-                    # Chuyển đổi sang model mà bạn đã test ✅ thành công
-                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:predict?key={GEMINI_API_KEY}"
+                    # Chuyển đổi từ :predict sang :generateContent theo chuẩn API Gemini
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key={GEMINI_API_KEY}"
+                    
+                    # Cấu trúc Payload chuẩn của Gemini
                     payload = {
-                        "instances": [{"prompt": p_final}],
-                        "parameters": {"sampleCount": 1, "aspectRatio": "1:1"}
+                        "contents": [
+                            {
+                                "parts": [{"text": p_final}]
+                            }
+                        ]
                     }
+                    
                     res = requests.post(url, json=payload)
                     data = res.json()
                     
-                    if "predictions" in data:
+                    if "candidates" in data:
                         import base64
-                        b64_img = data["predictions"][0]["bytesBase64Encoded"]
-                        st.session_state.img_res = base64.b64decode(b64_img)
-                        st.success("Tuyệt vời! Gemini Flash đã vẽ xong.")
+                        # Bóc tách dữ liệu ảnh từ cấu trúc phản hồi mới
+                        parts = data["candidates"][0]["content"]["parts"]
+                        b64_img = ""
+                        for part in parts:
+                            if "inlineData" in part:
+                                b64_img = part["inlineData"]["data"]
+                                break
+                        
+                        if b64_img:
+                            st.session_state.img_res = base64.b64decode(b64_img)
+                            st.success("Tuyệt vời! Gemini 3.1 Flash đã vẽ xong.")
+                        else:
+                            st.error("Lỗi: Máy chủ không trả về dữ liệu hình ảnh (inlineData).")
                     elif "error" in data:
                         st.error(f"Lỗi từ Google: {data['error']['message']}")
                     else:
