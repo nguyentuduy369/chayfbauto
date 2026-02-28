@@ -147,36 +147,25 @@ with tab1:
     c1, c2 = st.columns([1, 1.2])
     with c1:
         st.subheader("🎯 Cập nhật Trend Thời Gian Thực")
-        
-        # Nút gọi Gemini phân tích Trend mạng xã hội hôm nay
         if st.button("🔍 Phân tích Top Trend Hôm nay (Bởi Gemini)"):
             with st.spinner("Đang quét dữ liệu mạng xã hội hôm nay..."):
                 try:
-                    model = genai.GenerativeModel('gemini-2.5-flash')
-                    prompt_trend = """Hôm nay là ngày hiện tại. Bạn là Giám đốc Sáng tạo (Creative Director) tại Việt Nam. 
-                    Hãy phân tích xu hướng mạng xã hội hôm nay và đưa ra 1 ý tưởng viết bài viral cho thương hiệu 'Trạm Tuân Thủ Thông Minh' (Smart Compliance Hub).
-                    Bắt buộc trả về đúng 3 dòng định dạng sau (Tuyệt đối không giải thích thêm):
-                    Sản phẩm: [1 Dịch vụ cụ thể của Trạm Tuân Thủ Thông Minh phù hợp với trend]
-                    Đối tượng: [1 Tệp khách hàng cụ thể nhất]
-                    Trend: [1 Xu hướng, sự kiện, hoặc nỗi đau (pain point) đang được quan tâm nhất hôm nay]"""
+                    prompt_trend = """Hôm nay là ngày hiện tại. Bạn là Giám đốc Sáng tạo. Phân tích xu hướng MXH hôm nay và đưa ra ý tưởng viết bài viral cho 'Trạm Tuân Thủ Thông Minh'. Bắt buộc trả về đúng 3 dòng:
+                    Sản phẩm: [1 Dịch vụ phù hợp]
+                    Đối tượng: [1 Tệp khách hàng]
+                    Trend: [1 Xu hướng/sự kiện hôm nay]"""
                     
-                    res_trend = model.generate_content(prompt_trend).text
+                    # Sử dụng hàm xoay vòng Key
+                    res_trend = generate_with_key_rotation(prompt_trend)
                     
-                    # Tự động bóc tách dữ liệu và điền vào ô
-                    import re
                     sp_match = re.search(r'Sản phẩm:\s*(.*)', res_trend)
                     dt_match = re.search(r'Đối tượng:\s*(.*)', res_trend)
                     tr_match = re.search(r'Trend:\s*(.*)', res_trend)
                     
                     if sp_match and dt_match and tr_match:
-                        st.session_state.k1 = sp_match.group(1).strip()
-                        st.session_state.k2 = dt_match.group(1).strip()
-                        st.session_state.trend = tr_match.group(1).strip()
-                        st.success("Đã cập nhật bộ từ khóa Hot nhất hôm nay!")
-                    else:
-                        st.warning("Gemini đang bận. Vui lòng bấm thử lại.")
-                except Exception as e:
-                    st.error(f"Lỗi lấy trend: {e}")
+                        st.session_state.k1, st.session_state.k2, st.session_state.trend = sp_match.group(1).strip(), dt_match.group(1).strip(), tr_match.group(1).strip()
+                        st.success("Đã cập nhật trend!")
+                except Exception as e: st.error(f"Lỗi: {e}")
 
         st.divider()
         sp = st.text_input("Sản phẩm / Dịch vụ", st.session_state.get('k1', "Trạm Tuân Thủ Thông Minh"))
@@ -184,110 +173,64 @@ with tab1:
         tr = st.text_input("Trend / Bối cảnh", st.session_state.get('trend', "Tối ưu vận hành"))
         
         if st.button("✨ TẠO NỘI DUNG VIRAL"):
-            with st.spinner("Gemini đang viết bài..."):
+            with st.spinner("Đang chọn API Key phù hợp & viết bài..."):
                 try:
-                    model = genai.GenerativeModel('gemini-2.5-flash')
                     q = f"""Write a viral Facebook personal profile post for {sp} targeting {kh} with a {tr} vibe.
-                    CRITICAL RULES FOR [CONTENT]:
-                    - Extremely short and punchy (under 150 words).
-                    - Conversational, personal storytelling style (NOT a sales fanpage).
-                    - Start with a strong hook/question.
-                    - End with an open question to drive comments.
-                    - NO hard selling.
-                    Format strictly: [CONTENT] Vietnamese post here ||| [PROMPT] English image prompt here."""
+                    CRITICAL RULES: Under 150 words, conversational, hook, open question. Format: [CONTENT] Vietnamese post here ||| [PROMPT] English image prompt here."""
+                    res = generate_with_key_rotation(q)
                     
-                    res = model.generate_content(q).text
                     if "|||" in res:
-                        st.session_state.content = res.split("|||")[0].replace("[CONTENT]", "").strip()
-                        st.session_state.prompt = res.split("|||")[1].replace("[PROMPT]", "").strip()
+                        st.session_state.content, st.session_state.prompt = res.split("|||")[0].replace("[CONTENT]", "").strip(), res.split("|||")[1].replace("[PROMPT]", "").strip()
                     else:
-                        st.session_state.content = res
-                        st.session_state.prompt = f"A professional realistic photo about {sp}"
-                except Exception as e:
-                    st.error(f"Lỗi tạo nội dung: {e}")
+                        st.session_state.content, st.session_state.prompt = res, f"A professional realistic photo about {sp}"
+                except Exception as e: st.error(f"Lỗi: {e}")
 
     with c2:
-        st.session_state.content = st.text_area("Bài viết (Chuẩn viral cá nhân):", st.session_state.get('content',''), height=220)
+        st.session_state.content = st.text_area("Bài viết:", st.session_state.get('content',''), height=220)
         copy_button(st.session_state.content, "📋 Copy Content")
-        st.divider()
-        st.session_state.prompt = st.text_area("Prompt vẽ ảnh (EN):", st.session_state.get('prompt',''), height=100)
+        st.session_state.prompt = st.text_area("Prompt vẽ ảnh:", st.session_state.get('prompt',''), height=100)
         copy_button(st.session_state.prompt, "🖼️ Copy Prompt")
 
 with tab2:
-    st.subheader("🎨 Studio Ảnh (Smart Compliance Hub - 2 Server Tốt Nhất)")
+    st.subheader("🎨 Studio Ảnh (2 Server Độc Lập)")
     cl, cr = st.columns([1, 1])
     with cl:
-        engine = st.selectbox("Lựa chọn Máy chủ (Đã kiểm chứng):", [
-            "1. FLUX.1 Schnell (Máy chủ Hugging Face - Đã test Tốt)",
-            "2. Stable Diffusion XL (Máy chủ Together AI - Cực Nhanh)"
+        engine = st.selectbox("Lựa chọn Máy chủ:", [
+            "1. FLUX.1 Schnell (HuggingFace - Cực Nét)",
+            "2. Pollinations (Đã vượt rào Cloudflare - Ổn định)"
         ])
-        p_final = st.text_area("Xác nhận Lệnh vẽ (Tiếng Anh):", st.session_state.get('prompt',''), height=150)
+        p_final = st.text_area("Xác nhận Lệnh vẽ:", st.session_state.get('prompt',''), height=150)
         
         if st.button("🎨 VẼ ẢNH NGAY"):
             with st.spinner(f"Đang kết nối {engine.split('(')[0].strip()}..."):
                 try:
-                    if "Together AI" in engine:
-                        # ---------------------------------------------------------
-                        # MÁY CHỦ 2: TOGETHER AI (ỔN ĐỊNH, DÙNG API KEY MỚI)
-                        # ---------------------------------------------------------
-                        together_key = st.secrets.get("TOGETHER_API_KEY")
-                        if not together_key:
-                            st.error("❌ Chưa có TOGETHER_API_KEY trong Secrets. Vui lòng cài đặt!")
-                            st.stop()
-                            
-                        url = "https://api.together.xyz/v1/images/generations"
-                        headers = {
-                            "Authorization": f"Bearer {together_key}",
-                            "Content-Type": "application/json"
-                        }
-                        payload = {
-                            "model": "stabilityai/stable-diffusion-xl-base-1.0",
-                            "prompt": p_final,
-                            "n": 1,
-                            "steps": 20,
-                            "response_format": "b64_json"
-                        }
-                        res = requests.post(url, headers=headers, json=payload, timeout=40)
-                        data = res.json()
+                    if "Pollinations" in engine:
+                        import urllib.parse, random
+                        seed = random.randint(1, 100000)
+                        safe_prompt = urllib.parse.quote(p_final.replace('\n', ' '))
+                        url = f"https://image.pollinations.ai/prompt/{safe_prompt}?nologo=true&seed={seed}&width=1024&height=1024"
                         
-                        if "data" in data and len(data["data"]) > 0:
-                            import base64
-                            b64_img = data["data"][0]["b64_json"]
-                            st.session_state.img_res = base64.b64decode(b64_img)
-                            st.success("Tuyệt vời! Together AI đã tạo ảnh thành công.")
-                        elif "error" in data:
-                            st.error(f"Lỗi Together AI: {data['error']['message']}")
-                        else:
-                            st.error(f"Lỗi API: {data}")
-                            
-                    else:
-                        # ---------------------------------------------------------
-                        # MÁY CHỦ 1: HUGGING FACE (FLUX.1 SCHNELL)
-                        # ---------------------------------------------------------
-                        hf_headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-                        model_url = "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell"
-
-                        res = requests.post(model_url, headers=hf_headers, json={"inputs": p_final}, timeout=40)
+                        # Thêm User-Agent giả lập trình duyệt thực để vượt Cloudflare 530
+                        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+                        res = requests.get(url, headers=headers, timeout=30)
                         
-                        if res.status_code == 200 and 'image' in res.headers.get('content-type', ''):
+                        if res.status_code == 200:
                             st.session_state.img_res = res.content
-                            st.success("Tuyệt vời! Hugging Face đã tạo ảnh thành công.")
-                        elif res.status_code == 503:
-                            st.error("Máy chủ đang tải model (Mã 503). Vui lòng đợi khoảng 20 giây và bấm nút vẽ lại.")
-                        else:
-                            err_msg = res.json().get('error', 'Không rõ lỗi') if 'application/json' in res.headers.get('content-type', '') else res.text
-                            st.error(f"HF báo lỗi {res.status_code}: {err_msg}")
-
-                except Exception as e:
-                    st.error(f"Lỗi kết nối hệ thống: {e}")
+                            st.success("Tạo ảnh bằng Pollinations thành công!")
+                        else: st.error(f"Pollinations lỗi: {res.status_code}")
+                    else:
+                        hf_headers = {"Authorization": f"Bearer {HF_TOKEN}"}
+                        res = requests.post("https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell", headers=hf_headers, json={"inputs": p_final}, timeout=40)
+                        if res.status_code == 200:
+                            st.session_state.img_res = res.content
+                            st.success("Tạo ảnh bằng FLUX.1 thành công!")
+                        elif res.status_code == 503: st.error("Máy chủ HF đang khởi động. Vui lòng đợi 20s.")
+                        else: st.error(f"HF lỗi {res.status_code}")
+                except Exception as e: st.error(f"Lỗi: {e}")
                 
     with cr:
         if 'img_res' in st.session_state:
-            try:
-                st.image(st.session_state.img_res, use_container_width=True)
-                st.download_button("📥 Tải ảnh về", st.session_state.img_res, "smart_compliance_hub_post.png", "image/png")
-            except Exception as e:
-                st.warning("Lỗi hiển thị dữ liệu ảnh. Vui lòng bấm vẽ lại.")
+            st.image(st.session_state.img_res, use_container_width=True)
 with tab3:
     st.header("📤 Trạm Đăng Bài")
     if st.session_state.get('selected_fb'):
