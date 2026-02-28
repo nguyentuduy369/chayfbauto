@@ -100,49 +100,56 @@ if 'fanpages' not in st.session_state: st.session_state.fanpages = load_json('fa
 with st.sidebar:
     st.header("👤 Smart Compliance Hub")
     
-    with st.expander("🛠️ Quản lý Hồ sơ Nhân vật", expanded=True):
-        st.caption("Tạo hồ sơ để AI học theo phong cách và ngoại hình của bạn.")
+    # 1. BỘ ĐẾM NGƯỜI DÙNG (Lưu trữ bằng JSON)
+    stats_file = 'stats.json'
+    if not os.path.exists(stats_file): save_json({"visitors": 0}, stats_file)
+    stats = load_json(stats_file)
+    
+    # Chỉ tăng biến đếm 1 lần cho mỗi phiên truy cập
+    if 'visited' not in st.session_state:
+        stats['visitors'] += 1
+        save_json(stats, stats_file)
+        st.session_state.visited = True
         
-        f_name = st.text_input("Tên Gợi Nhớ (VD: Nick Clone 1, FB Chính):", placeholder="Nhập tên profile")
-        
-        st.write("**1. Ảnh Đại Diện (Để dễ nhận diện trên App):**")
-        avt_file = st.file_uploader("Tải lên Avatar thu nhỏ", type=['jpg', 'png'], key="avt")
-        if avt_file: st.image(avt_file, width=80)
+    st.metric("👁️ Lượt truy cập hệ thống", f"{stats['visitors']:,} users")
+    st.divider()
 
-        st.divider()
-        st.write("**2. Nhân vật mẫu (Cho AI bắt chước):**")
-        char_file = st.file_uploader("Tải lên Ảnh chân dung/Toàn thân", type=['jpg', 'png'], key="char")
-        if char_file: st.image(char_file, width=150)
-
-        if st.button("💾 LƯU HỒ SƠ", use_container_width=True):
-            if f_name:
-                b64_avt = image_to_base64(avt_file) if avt_file else ""
-                b64_char = image_to_base64(char_file) if char_file else ""
-                
-                st.session_state.accounts[f_name] = {
-                    "avatar_b64": b64_avt, 
-                    "character_b64": b64_char
-                }
-                save_json(st.session_state.accounts, 'accounts.json')
-                st.success("Đã lưu Hồ sơ an toàn!")
-                st.rerun()
-            else:
-                st.error("Vui lòng nhập Tên Gợi Nhớ!")
+    # 2. KHU VỰC DỮ LIỆU THỊ GIÁC (Dùng ngay không cần lưu trữ rườm rà)
+    st.subheader("📸 Dữ Liệu Nhân Vật")
+    st.caption("Tải ảnh để AI bóc tách đặc điểm khuôn mặt (Không bắt buộc).")
+    
+    char_file = st.file_uploader("Upload Ảnh Nhân Vật:", type=['jpg', 'png'], key="char", label_visibility="collapsed")
+    if char_file: 
+        st.image(char_file, use_container_width=True)
+        # Lưu trực tiếp vào bộ nhớ tạm để Bước 1 dùng ngay
+        st.session_state.current_char_b64 = image_to_base64(char_file)
+    else:
+        st.session_state.current_char_b64 = ""
 
     st.divider()
-    if st.session_state.accounts:
-        st.session_state.selected_fb = st.selectbox("🎯 Chọn Hồ sơ đang làm việc:", list(st.session_state.accounts.keys()))
-        acc = st.session_state.accounts[st.session_state.selected_fb]
-        if acc.get('avatar_b64'): 
-            st.image(acc['avatar_b64'], width=60)
-            
-        # Nút tiện ích mở nhanh Facebook (Thay thế cho JS rườm rà)
-        st.write("---")
-        st.markdown(f'<a href="https://www.facebook.com" target="_blank" style="display: block; text-align: center; background-color: #0866FF; color: white; padding: 10px; border-radius: 5px; text-decoration: none; font-weight: bold;">🌐 MỞ NHANH FACEBOOK.COM</a>', unsafe_allow_html=True)
-        st.caption("👉 Mở Facebook trên trình duyệt hiện tại của bạn để dán bài viết.")
-    else: 
-        st.session_state.selected_fb = None
-        st.warning("Chưa có Hồ sơ nào. Vui lòng thêm ở trên.")
+    
+    # 3. MỞ NHANH MẠNG XÃ HỘI (Bằng HTML/CSS Button)
+    st.subheader("🚀 Mở Nhanh Nền Tảng")
+    c_fb, c_tt = st.columns(2)
+    c_yt, c_tl = st.columns(2)
+    with c_fb: st.markdown('<a href="https://facebook.com" target="_blank"><button style="width:100%; border-radius:5px; background:#0866FF; color:white; border:none; padding:8px; font-weight:bold; cursor:pointer;">📘 Facebook</button></a>', unsafe_allow_html=True)
+    with c_tt: st.markdown('<a href="https://tiktok.com" target="_blank"><button style="width:100%; border-radius:5px; background:#000000; color:white; border:none; padding:8px; font-weight:bold; cursor:pointer;">🎵 TikTok</button></a>', unsafe_allow_html=True)
+    with c_yt: st.markdown('<a href="https://youtube.com" target="_blank"><button style="width:100%; border-radius:5px; background:#FF0000; color:white; border:none; padding:8px; font-weight:bold; cursor:pointer;">▶️ YouTube</button></a>', unsafe_allow_html=True)
+    with c_tl: st.markdown('<a href="https://web.telegram.org" target="_blank"><button style="width:100%; border-radius:5px; background:#24A1DE; color:white; border:none; padding:8px; font-weight:bold; cursor:pointer;">✈️ Telegram</button></a>', unsafe_allow_html=True)
+
+    st.divider()
+    
+    # 4. KHUNG GÓP Ý & LIÊN HỆ TRỰC TIẾP
+    st.subheader("💬 Hỗ Trợ & Góp Ý")
+    st.info("Gặp lỗi hoặc cần tư vấn sử dụng? Trò chuyện trực tiếp với Admin:")
+    
+    c_zalo, c_tele = st.columns(2)
+    # BẠN HÃY THAY LINK ZALO VÀ TELEGRAM CỦA BẠN VÀO ĐÂY NHÉ:
+    link_zalo = "https://zalo.me/090xxxxxxx" # Đổi số điện thoại của bạn
+    link_tele = "https://t.me/username_cua_ban" # Đổi username telegram
+    
+    with c_zalo: st.markdown(f'<a href="{link_zalo}" target="_blank"><button style="width:100%; border-radius:5px; background:#0068FF; color:white; border:none; padding:8px; font-weight:bold; cursor:pointer;">💬 Zalo</button></a>', unsafe_allow_html=True)
+    with c_tele: st.markdown(f'<a href="{link_tele}" target="_blank"><button style="width:100%; border-radius:5px; background:#24A1DE; color:white; border:none; padding:8px; font-weight:bold; cursor:pointer;">✈️ Tele</button></a>', unsafe_allow_html=True)
 
 # --- MAIN ---
 st.title("🚀 Smart Automation Hub - Nền Tảng")
