@@ -155,15 +155,15 @@ with tab1:
         copy_button(st.session_state.prompt, "🖼️ Copy Prompt")
 
 with tab2:
-    st.subheader("🎨 Studio Ảnh (Google Imagen 3)")
+    st.subheader("🎨 Studio Ảnh (Gemini 3.1 Flash Image)")
     cl, cr = st.columns([1, 1])
     with cl:
         p_final = st.text_area("Xác nhận Lệnh vẽ (Tiếng Anh):", st.session_state.get('prompt',''), height=150)
-        if st.button("🎨 VẼ ẢNH VỚI IMAGEN 3"):
-            with st.spinner("Đang kết nối Google Imagen 3..."):
+        if st.button("🎨 VẼ ẢNH VỚI GEMINI FLASH"):
+            with st.spinner("Đang kết nối API Gemini 3.1 Flash Image..."):
                 try:
-                    # Chuyển đổi sang model 001 (ổn định hơn cho API v1beta)
-                    url = f"https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key={GEMINI_API_KEY}"
+                    # Chuyển đổi sang model mà bạn đã test ✅ thành công
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:predict?key={GEMINI_API_KEY}"
                     payload = {
                         "instances": [{"prompt": p_final}],
                         "parameters": {"sampleCount": 1, "aspectRatio": "1:1"}
@@ -172,21 +172,21 @@ with tab2:
                     data = res.json()
                     
                     if "predictions" in data:
+                        import base64
                         b64_img = data["predictions"][0]["bytesBase64Encoded"]
                         st.session_state.img_res = base64.b64decode(b64_img)
-                        st.success("Vẽ thành công!")
+                        st.success("Tuyệt vời! Gemini Flash đã vẽ xong.")
                     elif "error" in data:
                         st.error(f"Lỗi từ Google: {data['error']['message']}")
-                        st.info("Lưu ý: Nếu vẫn gặp lỗi 404/403, nghĩa là Google chưa mở khóa tính năng tạo ảnh cho API Key miễn phí của bạn. Bạn sẽ cần một API chuyên dụng khác.")
                     else:
-                        st.error(f"Lỗi API: {data}")
+                        st.error(f"Lỗi cấu trúc trả về: {data}")
                 except Exception as e: st.error(f"Lỗi hệ thống: {e}")
                 
     with cr:
         if 'img_res' in st.session_state:
             try:
                 st.image(st.session_state.img_res, use_container_width=True)
-                st.download_button("📥 Tải ảnh", st.session_state.img_res, "imagen_post.png", "image/png")
+                st.download_button("📥 Tải ảnh về", st.session_state.img_res, "gemini_image_post.png", "image/png")
             except:
                 st.warning("Lỗi hiển thị dữ liệu ảnh.")
 with tab3:
