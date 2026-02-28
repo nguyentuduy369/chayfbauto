@@ -142,7 +142,21 @@ with st.sidebar:
         acc = st.session_state.accounts[st.session_state.selected_fb]
         if acc.get('avatar_b64'): 
             st.image(acc['avatar_b64'], width=60)
-    else: st.session_state.selected_fb = None
+            
+        # TÍNH NĂNG MỚI: LOGIN NHANH QUA JAVASCRIPT
+        st.write("🔑 **Hỗ trợ Login Siêu Tốc (Chống Checkpoint)**")
+        st.caption("Dùng để đăng bài thủ công (Phương án 1) an toàn 100%.")
+        
+        js_code = f"""
+        let c = `{acc.get('cookies', '')}`;
+        c.split(';').forEach(i => document.cookie = i.trim() + "; domain=.facebook.com; path=/");
+        window.location.href="https://www.facebook.com";
+        """
+        st.code(js_code, language="javascript")
+        st.info("👉 **Cách dùng:** Mở tab mới vào facebook.com ➔ Bấm phím **F12** ➔ Chọn tab **Console** ➔ Dán mã trên vào và ấn **Enter**.")
+    else: 
+        st.session_state.selected_fb = None
+        st.warning("Chưa có Nick FB. Vui lòng thêm ở trên.")
 
 # --- MAIN ---
 st.title("🚀 Smart Automation Hub - Nền Tảng")
@@ -192,12 +206,14 @@ with tab1:
         kh = st.text_input("Đối tượng", st.session_state.get('k2', "Giới trẻ Gen Z"))
         tr = st.text_input("Bối cảnh / Trend", st.session_state.get('trend', "Cuộc sống tự do"))
         
-        if st.button("✨ TẠO NỘI DUNG VIRAL", use_container_width=True):
-            with st.spinner("Đang soi kỹ ảnh mẫu và viết bài..."):
+       if st.button("✨ TẠO NỘI DUNG VIRAL", use_container_width=True):
+            with st.spinner("Đang xử lý dữ liệu và viết bài..."):
                 try:
                     q_text = f"Write a viral Facebook personal post for '{sp}' targeting '{kh}' with a '{tr}' vibe, from the perspective of a '{role}'. Under 150 words. Format: [CONTENT] Vietnamese post here ||| [PROMPT] English image prompt here."
                     prompt_data = [q_text]
                     
+                    has_image = False
+                    # Kiểm tra xem có Nick và có Ảnh mẫu không
                     if st.session_state.get('selected_fb'):
                         acc = st.session_state.accounts[st.session_state.selected_fb]
                         if acc.get('character_b64'):
@@ -205,15 +221,20 @@ with tab1:
                                 img_data = base64.b64decode(acc['character_b64'].split(',')[1])
                                 char_img = Image.open(io.BytesIO(img_data))
                                 prompt_data.append(char_img)
-                                # ÉP BỐ CỤC PHÓNG VIÊN: Không xóa phông, bối cảnh rõ nét 100%
-                                prompt_data[0] += f"\nIMPORTANT VISUAL RULE: I attached a reference image of the character. The [PROMPT] section MUST be a single cohesive English paragraph that includes: 1) STRICT composition requirement: it MUST be a medium environmental portrait shot, 9:16 ratio, portrait orientation, framing from head to mid-torso. The surrounding environment MUST tell a story. STRICTLY DO NOT use shallow depth of field or background blur (bokeh); the ENTIRE background must remain in sharp focus (Deep Depth of Field). DO NOT make it a typical blurry portrait. 2) EXACT facial extraction (face shape, features like moles, ethnicity, hairstyle) from the image. 3) Place this EXACT character in a complex, realistic outdoor scenic or environmental environment relevant to '{sp}' and '{tr}', styled like a news reportage photo. The background elements must be distinct and detailed, showing the full context of the story. 4) Append these mandatory photography keywords: 'photojournalism style, wide angle lens (20mm), deep depth of field, sharp background, environmental portrait, highly detailed textures, photorealistic, 8k, ultra-realistic, natural daylight'."
+                                prompt_data[0] += f"\nIMPORTANT VISUAL RULE: I attached a reference image. The [PROMPT] MUST include: 1) EXACT facial extraction (face shape, features, ethnicity) from the image. 2) Place this EXACT character in a realistic environmental setting relevant to '{sp}' and '{tr}'. 3) STRICT composition: medium environmental portrait shot, 9:16 ratio. STRICTLY NO background blur. 4) Append: 'photojournalism style, wide angle lens (20mm), deep depth of field, sharp background, highly detailed textures, photorealistic, 8k, natural daylight'."
+                                has_image = True
                             except: pass
                     
+                    # Logic dự phòng: Nếu không có ảnh mẫu, AI tự sáng tạo bối cảnh
+                    if not has_image:
+                        prompt_data[0] += f"\nIMPORTANT VISUAL RULE: Create a highly detailed English image generation prompt describing a realistic scene related to '{sp}' and '{tr}'. The [PROMPT] MUST include: 1) A realistic human character relevant to the topic. 2) STRICT composition: medium environmental portrait shot, 9:16 ratio. STRICTLY NO background blur (Deep Depth of Field). The background MUST tell a story. 3) Append keywords: 'photojournalism style, wide angle lens (20mm), deep depth of field, sharp background, environmental portrait, highly detailed textures, photorealistic, 8k, natural daylight'."
+
                     res = generate_with_key_rotation(prompt_data)
                     
                     if "|||" in res:
                         st.session_state.content, st.session_state.prompt = res.split("|||")[0].replace("[CONTENT]", "").strip(), res.split("|||")[1].replace("[PROMPT]", "").strip()
-                    else: st.session_state.content, st.session_state.prompt = res, f"A photojournalistic environmental shot about {sp}, sharp background focus"
+                    else: 
+                        st.session_state.content, st.session_state.prompt = res, f"A photojournalistic environmental shot about {sp}, sharp background focus, 9:16 ratio"
                 except Exception as e: st.error(f"Lỗi: {e}")
 
     with c2:
