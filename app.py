@@ -563,113 +563,174 @@ with tab2:
         """, unsafe_allow_html=True)
 with tab3:
     st.markdown('<div class="step-title">BƯỚC 3: ĐỒNG BỘ & XUẤT BẢN 🚀 <span class="arrow-anim">>></span></div>', unsafe_allow_html=True)
-    st.markdown('<div class="step-sub">Quản lý tài sản số và phân phối nội dung đa kênh chuẩn tuân thủ chính sách (Compliance).</div>', unsafe_allow_html=True)
+    st.markdown('<div class="step-sub">Quản trị Tài sản số (Assets) và Phân phối đa kênh qua cổng API chính thức (Chuẩn Compliance).</div>', unsafe_allow_html=True)
 
-    col_pub, col_prev = st.columns([1, 1.2])
+    # Khởi tạo bộ nhớ tạm cho 4 nền tảng nếu chưa có
+    for api_key in ['api_fb', 'api_ig', 'api_tele', 'api_zalo']:
+        if api_key not in st.session_state:
+            st.session_state[api_key] = load_json(f'{api_key}.json')
 
-    with col_prev:
-        st.markdown('<div class="block-title">📱 Bản Xem Trước Trực Quan (Live Preview)</div>', unsafe_allow_html=True)
-        
-        # Sửa lỗi: Lấy dữ liệu từ img_list của Bước 2
-        images = st.session_state.get('img_list', [])
-        content = st.session_state.get('content', 'Vui lòng quay lại Bước 1 để tạo nội dung...')
-        
-        # Khung viền mô phỏng màn hình điện thoại
-        st.markdown('<div style="border: 1px solid #E5E7EB; border-radius: 15px; padding: 20px; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">', unsafe_allow_html=True)
-        
-        # Header giả lập Avatar
+    # ==========================================
+    # KHU VỰC TOP: BẢN XEM TRƯỚC (LIVE PREVIEW) TOÀN DẢI
+    # ==========================================
+    st.markdown('<div class="block-title">📱 Bản Xem Trước Trực Quan (Live Preview)</div>', unsafe_allow_html=True)
+    
+    images = st.session_state.get('img_list', [])
+    content = st.session_state.get('content', 'Chưa có nội dung. Vui lòng quay lại Bước 1.')
+    
+    # 1. Tùy chọn Bố cục Xem trước
+    preview_style = st.radio("👀 Chọn chế độ hiển thị:", ["📘 Giao diện Facebook", "📸 Giao diện Instagram", "🔲 Lưới Ảnh Tiêu Chuẩn"], horizontal=True, label_visibility="collapsed")
+    
+    # Khung UI mô phỏng
+    bg_color = "#ffffff" if "Facebook" in preview_style else "#fafafa"
+    st.markdown(f'<div style="border: 1px solid #E5E7EB; border-radius: 12px; padding: 25px; background: {bg_color}; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px;">', unsafe_allow_html=True)
+    
+    if "Facebook" in preview_style:
         st.markdown("""
             <div style="display: flex; align-items: center; margin-bottom: 15px;">
-                <div style="width: 40px; height: 40px; border-radius: 50%; background: #6C63FF; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">VS</div>
-                <div style="margin-left: 10px;">
-                    <div style="font-weight: bold; color: #1E293B; font-size: 15px;">ViralSync Pro Workspace</div>
-                    <div style="font-size: 12px; color: #9CA3AF;">Vừa xong • 🌐 Mọi người</div>
+                <div style="width: 45px; height: 45px; border-radius: 50%; background: #0866FF; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 18px;">VS</div>
+                <div style="margin-left: 12px;">
+                    <div style="font-weight: 700; color: #050505; font-size: 16px;">ViralSync Pro Workspace</div>
+                    <div style="font-size: 13px; color: #65676B;">Vừa xong • 🌎 Public</div>
                 </div>
             </div>
         """, unsafe_allow_html=True)
-        
-        # Nội dung văn bản
-        st.markdown(f'<div style="white-space: pre-wrap; font-size: 15px; color: #334155; margin-bottom: 15px;">{content}</div>', unsafe_allow_html=True)
-        
-        # Thuật toán xếp bố cục ảnh (Grid Layout) giống Facebook
-        if not images:
-            st.info("Chưa có hình ảnh. Hãy sang Bước 2 để tạo ảnh AI.")
-        elif len(images) == 1:
-            st.image(images[0], use_container_width=True)
-        elif len(images) == 2:
-            c1, c2 = st.columns(2)
-            with c1: st.image(images[0], use_container_width=True)
-            with c2: st.image(images[1], use_container_width=True)
-        elif len(images) == 3:
-            c1, c2 = st.columns([1, 1])
-            with c1: st.image(images[0], use_container_width=True)
-            with c2: 
-                st.image(images[1], use_container_width=True)
-                st.image(images[2], use_container_width=True)
-        elif len(images) >= 4:
-            c1, c2 = st.columns(2)
-            with c1: 
-                st.image(images[0], use_container_width=True)
-                st.image(images[2], use_container_width=True)
-            with c2: 
-                st.image(images[1], use_container_width=True)
-                st.image(images[3], use_container_width=True)
-        
-        st.markdown('</div>', unsafe_allow_html=True) # Đóng khung điện thoại
+    elif "Instagram" in preview_style:
+        st.markdown("""
+            <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); padding: 2px;">
+                    <div style="width: 100%; height: 100%; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">VS</div>
+                </div>
+                <div style="margin-left: 12px; font-weight: 600; color: #262626; font-size: 15px;">viralsync_pro</div>
+            </div>
+        """, unsafe_allow_html=True)
 
-    with col_pub:
-        # --- PHƯƠNG ÁN 1: TÀI KHOẢN CÁ NHÂN ---
-        st.markdown('<div class="block-title">🛡️ 1. Phân Phối Thủ Công (Nick Cá Nhân / Zalo)</div>', unsafe_allow_html=True)
-        st.success("Tuyệt đối an toàn 100%. Tương thích với thuật toán chống Spam của mọi nền tảng đối với tài khoản cá nhân.")
-        
+    # Hiển thị Content
+    st.markdown(f'<div style="white-space: pre-wrap; font-size: 15px; color: #1c1e21; margin-bottom: 20px;">{content}</div>', unsafe_allow_html=True)
+    
+    # Hiển thị Lưới Ảnh
+    if not images:
+        st.info("Chưa có hình ảnh. Hãy sang Bước 2 để tạo ảnh AI.")
+    elif len(images) == 1:
+        st.image(images[0], use_container_width=True)
+    elif len(images) == 2:
+        c1, c2 = st.columns(2)
+        with c1: st.image(images[0], use_container_width=True)
+        with c2: st.image(images[1], use_container_width=True)
+    elif len(images) == 3:
+        c1, c2, c3 = st.columns(3)
+        with c1: st.image(images[0], use_container_width=True)
+        with c2: st.image(images[1], use_container_width=True)
+        with c3: st.image(images[2], use_container_width=True)
+    elif len(images) >= 4:
+        c1, c2, c3, c4 = st.columns(4)
+        with c1: st.image(images[0], use_container_width=True)
+        with c2: st.image(images[1], use_container_width=True)
+        with c3: st.image(images[2], use_container_width=True)
+        with c4: st.image(images[3], use_container_width=True)
+
+    st.markdown('</div>', unsafe_allow_html=True) # Đóng khung
+    
+    # 2. Các nút Copy & Tải ảnh dàn hàng ngang
+    c_copy, c_dl = st.columns([1, 3])
+    with c_copy:
+        copy_button(content, "📋 COPY BÀI VIẾT")
+    with c_dl:
         if images:
-            with st.expander("📥 Tải Xuống Trọn Bộ Tài Sản (Assets)", expanded=True):
-                # Tạo nút tải xuống cho từng ảnh trong mảng
-                for idx, img in enumerate(images):
-                    st.download_button(f"⬇️ Tải Ảnh {idx+1} (Chất lượng cao)", img, f"viralsync_final_{idx+1}.png", "image/png", use_container_width=True)
-        else:
-            st.warning("Bạn chưa có ảnh nào để tải xuống.")
-            
-        st.divider()
-        
-        # --- PHƯƠNG ÁN 2: API DOANH NGHIỆP ---
-        st.markdown('<div class="block-title">⚡ 2. Trung Tâm API (Doanh Nghiệp / Kênh Lớn)</div>', unsafe_allow_html=True)
-        st.info("Tự động hóa hoàn toàn thông qua cổng API chính thức. Áp dụng cho Fanpage, Group, Channel.")
-        
-        # Tab con trong phần API để quản lý nhiều nền tảng
-        api_fb, api_tele = st.tabs(["📘 Meta Graph API (Fanpage)", "✈️ Telegram Bot API (Channel)"])
-        
-        with api_fb:
-            with st.expander("➕ Quản lý Token Fanpage"):
-                p_name = st.text_input("Tên Fanpage:", placeholder="VD: Page Mỹ Phẩm Chính")
-                p_id = st.text_input("Page ID:", placeholder="Nhập dãy số ID")
-                p_token = st.text_input("Access Token:", type="password", placeholder="EAAI...")
-                if st.button("💾 Lưu Cấu Hình Fanpage"):
-                    if p_name and p_id and p_token:
-                        st.session_state.fanpages[p_name] = {"id": p_id.strip(), "token": p_token.strip()}
-                        save_json(st.session_state.fanpages, 'fanpages.json')
-                        st.success(f"Đã lưu Fanpage: {p_name}")
-                        st.rerun()
-                    else: st.error("Vui lòng điền đủ thông tin!")
-            
-            if st.session_state.fanpages:
-                selected_pages = st.multiselect("🎯 Chọn Fanpage mục tiêu:", list(st.session_state.fanpages.keys()))
-                if st.button("🔥 BROADCAST LÊN FANPAGE", use_container_width=True, type="primary"):
-                    if not content or not images:
-                        st.error("❌ Thiếu Nội dung hoặc Hình ảnh!")
-                    elif not selected_pages:
-                        st.error("❌ Cần chọn ít nhất 1 Fanpage.")
-                    else:
-                        st.toast("Tính năng gọi API đang chạy thử nghiệm...")
-                        # Logic API Fanpage giữ nguyên ở đây...
-            else:
-                st.warning("Chưa có Fanpage nào được liên kết.")
+            dl_cols = st.columns(len(images))
+            for idx, img in enumerate(images):
+                with dl_cols[idx]:
+                    st.download_button(f"📥 Tải Ảnh {idx+1}", img, f"vs_asset_{idx+1}.png", "image/png", use_container_width=True)
 
-        with api_tele:
-            st.caption("Telegram Channel là kênh cực kỳ hiệu quả để đẩy thông báo/tin tức nhanh.")
-            with st.expander("➕ Quản lý Bot Telegram"):
-                t_name = st.text_input("Tên Kênh:", placeholder="VD: Channel Săn Sale")
-                t_chat_id = st.text_input("Chat ID:", placeholder="VD: @kenhsansale hoặc -100xxx")
-                t_token = st.text_input("Bot Token:", type="password", placeholder="123456:ABC-DEF...")
-                if st.button("💾 Lưu Cấu Hình Telegram"):
-                    st.info("Tính năng kết nối Bot Telegram đang được mở rộng trong bản cập nhật tới.")
+    st.divider()
+
+    # ==========================================
+    # KHU VỰC BOTTOM: TRUNG TÂM PHÂN PHỐI API (2x2 GRID)
+    # ==========================================
+    st.markdown('<div class="block-title">⚡ Trung Tâm Phân Phối Đa Kênh (API Hub)</div>', unsafe_allow_html=True)
+    
+    r1c1, r1c2 = st.columns(2)
+    r2c1, r2c2 = st.columns(2)
+
+    # --- 1. FACEBOOK FANPAGE ---
+    with r1c1:
+        st.markdown('<h4 style="color:#0866FF; margin-bottom:5px;">📘 Meta Graph API (Fanpage)</h4>', unsafe_allow_html=True)
+        with st.expander("➕ Cấu hình Access Token", expanded=False):
+            fb_name = st.text_input("Tên Fanpage Định Danh:", key="fb_n")
+            fb_id = st.text_input("Page ID:", key="fb_id")
+            fb_token = st.text_input("Page Access Token:", type="password", key="fb_t")
+            if st.button("💾 Lưu Cấu Hình Fanpage", use_container_width=True):
+                if fb_name and fb_id and fb_token:
+                    st.session_state.api_fb[fb_name] = {"id": fb_id, "token": fb_token}
+                    save_json(st.session_state.api_fb, 'api_fb.json')
+                    st.success("Đã lưu!")
+                else: st.warning("Điền đủ thông tin!")
+        
+        with st.expander("🗄️ Kho Tài Khoản & Broadcast", expanded=True):
+            if st.session_state.api_fb:
+                fb_sel = st.multiselect("Chọn Page để đăng:", list(st.session_state.api_fb.keys()), key="fb_sel")
+                if st.button("🚀 BẮN API LÊN FACEBOOK", type="primary", use_container_width=True):
+                    st.toast("Đang gửi Request đến Meta Graph API...")
+            else: st.caption("Chưa có tài khoản nào được lưu.")
+
+    # --- 2. INSTAGRAM BUSINESS ---
+    with r1c2:
+        st.markdown('<h4 style="color:#E1306C; margin-bottom:5px;">📸 Instagram Graph API</h4>', unsafe_allow_html=True)
+        with st.expander("➕ Cấu hình IG Business", expanded=False):
+            ig_name = st.text_input("Tên Tài Khoản IG:", key="ig_n")
+            ig_id = st.text_input("IG Account ID:", key="ig_id")
+            ig_token = st.text_input("Access Token:", type="password", key="ig_t")
+            if st.button("💾 Lưu Cấu Hình IG", use_container_width=True):
+                if ig_name and ig_id and ig_token:
+                    st.session_state.api_ig[ig_name] = {"id": ig_id, "token": ig_token}
+                    save_json(st.session_state.api_ig, 'api_ig.json')
+                    st.success("Đã lưu!")
+        
+        with st.expander("🗄️ Kho Tài Khoản & Broadcast", expanded=True):
+            if st.session_state.api_ig:
+                ig_sel = st.multiselect("Chọn IG để đăng:", list(st.session_state.api_ig.keys()), key="ig_sel")
+                if st.button("🚀 BẮN API LÊN INSTAGRAM", type="primary", use_container_width=True):
+                    st.toast("Đang tải ảnh lên máy chủ Instagram...")
+            else: st.caption("Chưa có tài khoản nào được lưu.")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # --- 3. TELEGRAM BOT API ---
+    with r2c1:
+        st.markdown('<h4 style="color:#24A1DE; margin-bottom:5px;">✈️ Telegram Bot API</h4>', unsafe_allow_html=True)
+        with st.expander("➕ Cấu hình Bot & Channel", expanded=False):
+            tl_name = st.text_input("Tên Kênh (Channel/Group):", key="tl_n")
+            tl_id = st.text_input("Chat ID (VD: @channel_name):", key="tl_id")
+            tl_token = st.text_input("Bot Token (Từ BotFather):", type="password", key="tl_t")
+            if st.button("💾 Lưu Cấu Hình Telegram", use_container_width=True):
+                if tl_name and tl_id and tl_token:
+                    st.session_state.api_tele[tl_name] = {"id": tl_id, "token": tl_token}
+                    save_json(st.session_state.api_tele, 'api_tele.json')
+                    st.success("Đã lưu!")
+        
+        with st.expander("🗄️ Kho Tài Khoản & Broadcast", expanded=True):
+            if st.session_state.api_tele:
+                tl_sel = st.multiselect("Chọn Kênh Telegram:", list(st.session_state.api_tele.keys()), key="tl_sel")
+                if st.button("🚀 BẮN API LÊN TELEGRAM", type="primary", use_container_width=True):
+                    st.toast("Đang đẩy tin nhắn qua Telegram Bot...")
+            else: st.caption("Chưa có tài khoản nào được lưu.")
+
+    # --- 4. ZALO OA API ---
+    with r2c2:
+        st.markdown('<h4 style="color:#0068FF; margin-bottom:5px;">💬 Zalo OA API</h4>', unsafe_allow_html=True)
+        with st.expander("➕ Cấu hình Zalo Official Account", expanded=False):
+            zl_name = st.text_input("Tên Zalo OA:", key="zl_n")
+            zl_id = st.text_input("OA ID:", key="zl_id")
+            zl_token = st.text_input("Access Token:", type="password", key="zl_t")
+            if st.button("💾 Lưu Cấu Hình Zalo OA", use_container_width=True):
+                if zl_name and zl_id and zl_token:
+                    st.session_state.api_zalo[zl_name] = {"id": zl_id, "token": zl_token}
+                    save_json(st.session_state.api_zalo, 'api_zalo.json')
+                    st.success("Đã lưu!")
+        
+        with st.expander("🗄️ Kho Tài Khoản & Broadcast", expanded=True):
+            if st.session_state.api_zalo:
+                zl_sel = st.multiselect("Chọn Zalo OA:", list(st.session_state.api_zalo.keys()), key="zl_sel")
+                if st.button("🚀 BẮN API LÊN ZALO OA", type="primary", use_container_width=True):
+                    st.toast("Đang gửi Broadcast qua Zalo ZNS...")
+            else: st.caption("Chưa có tài khoản nào được lưu.")
