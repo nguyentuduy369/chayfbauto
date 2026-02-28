@@ -145,13 +145,24 @@ st.title("🚀 Smart Automation Hub - Nền Tảng")
 tab1, tab2, tab3 = st.tabs(["📝 Bước 1: Content", "🎨 Bước 2: Ảnh AI (Imagen 3)", "📤 Bước 3: Đăng Bài"])
 
 with tab1:
+    st.subheader("🎯 Bảng Điều Khiển Nội Dung (Đa Ngành Nghề)")
+    
+    # 1. BỘ LỌC TÙY CHỈNH CHO NGƯỜI DÙNG (KOL, KOC, SALE...)
+    col_f1, col_f2, col_f3 = st.columns(3)
+    with col_f1:
+        role = st.selectbox("Vai trò của bạn:", ["KOL / KOC Review", "Sale / Bán hàng", "Chuyên gia / Đào tạo", "Idol Livestream", "Chủ Doanh Nghiệp"])
+    with col_f2:
+        target_age = st.selectbox("Độ tuổi Khách hàng:", ["Gen Z (18-24 tuổi)", "Millennials (25-34 tuổi)", "Trung niên (35-50 tuổi)", "Mọi lứa tuổi"])
+    with col_f3:
+        target_region = st.selectbox("Khu vực / Văn hóa:", ["Toàn quốc (Phổ thông)", "Miền Nam (Sôi nổi, trend)", "Miền Bắc (Chỉn chu, sâu sắc)"])
+
     c1, c2 = st.columns([1, 1.2])
     with c1:
-        st.subheader("🎯 Cập nhật Trend Thời Gian Thực")
-        if st.button("🔍 Phân tích Top Trend Hôm nay (Bởi Gemini)"):
-            with st.spinner("Đang quét dữ liệu mạng xã hội hôm nay..."):
+        if st.button("🔍 Phân tích Top Trend Hôm nay (Bởi Gemini)", use_container_width=True):
+            with st.spinner("Đang phân tích dữ liệu mạng xã hội theo tệp người dùng..."):
                 try:
-                    prompt_trend = ["Hôm nay là ngày hiện tại. Phân tích xu hướng MXH hôm nay và đưa ra ý tưởng viết bài viral cho 'Trạm Tuân Thủ Thông Minh'. Bắt buộc trả về đúng 3 dòng:\nSản phẩm: [1 Dịch vụ phù hợp]\nĐối tượng: [1 Tệp khách hàng]\nTrend: [1 Xu hướng/sự kiện hôm nay]"]
+                    # Prompt động dựa trên lựa chọn của người dùng WebApp
+                    prompt_trend = [f"Hôm nay là ngày hiện tại. Bạn là Giám đốc Sáng tạo. Hãy phân tích xu hướng MXH hôm nay phù hợp cho một người làm '{role}', nhắm đến tệp khách hàng '{target_age}' tại '{target_region}'. Bắt buộc trả về đúng 3 dòng định dạng sau:\nSản phẩm: [1 Sản phẩm/Chủ đề cực hot để đăng bài]\nĐối tượng: [Chi tiết tệp khách hàng]\nTrend: [1 Xu hướng, câu nói hoặc sự kiện đang viral hôm nay]"]
                     res_trend = generate_with_key_rotation(prompt_trend)
                     
                     import re
@@ -160,22 +171,25 @@ with tab1:
                     tr_match = re.search(r'Trend:\s*(.*)', res_trend)
                     
                     if sp_match and dt_match and tr_match:
-                        st.session_state.k1, st.session_state.k2, st.session_state.trend = sp_match.group(1).strip(), dt_match.group(1).strip(), tr_match.group(1).strip()
-                        st.success("Đã cập nhật trend!")
-                except Exception as e: st.error(f"Lỗi: {e}")
+                        st.session_state.k1 = sp_match.group(1).strip()
+                        st.session_state.k2 = dt_match.group(1).strip()
+                        st.session_state.trend = tr_match.group(1).strip()
+                        st.success("Đã rà quét và nạp Trend thành công!")
+                    else:
+                        st.warning("Dữ liệu trả về chưa chuẩn, vui lòng bấm lại.")
+                except Exception as e: st.error(f"Lỗi lấy trend: {e}")
 
         st.divider()
-        sp = st.text_input("Sản phẩm / Dịch vụ", st.session_state.get('k1', "Trạm Tuân Thủ Thông Minh"))
-        kh = st.text_input("Đối tượng", st.session_state.get('k2', "Chủ doanh nghiệp SME"))
-        tr = st.text_input("Trend / Bối cảnh", st.session_state.get('trend', "Tối ưu vận hành"))
+        sp = st.text_input("Chủ đề / Sản phẩm", st.session_state.get('k1', "Review phong cách sống"))
+        kh = st.text_input("Đối tượng", st.session_state.get('k2', "Giới trẻ Gen Z"))
+        tr = st.text_input("Bối cảnh / Trend", st.session_state.get('trend', "Cuộc sống tự do"))
         
-        if st.button("✨ TẠO NỘI DUNG VIRAL"):
-            with st.spinner("Đang phân tích Ảnh Mẫu và Viết bài..."):
+        if st.button("✨ TẠO NỘI DUNG VIRAL", use_container_width=True):
+            with st.spinner("Đang soi kỹ ảnh mẫu và viết bài..."):
                 try:
-                    q_text = f"Write a viral Facebook personal post for {sp} targeting {kh} with a {tr} vibe. Under 150 words. Format: [CONTENT] Vietnamese post here ||| [PROMPT] English image prompt here."
+                    q_text = f"Write a viral Facebook personal post for '{sp}' targeting '{kh}' with a '{tr}' vibe, from the perspective of a '{role}'. Under 150 words. Format: [CONTENT] Vietnamese post here ||| [PROMPT] English image prompt here."
                     prompt_data = [q_text]
                     
-                    # CƠ CHẾ PROMPT MỚI: Ép kết hợp Nhân vật + Bối cảnh
                     if st.session_state.get('selected_fb'):
                         acc = st.session_state.accounts[st.session_state.selected_fb]
                         if acc.get('character_b64'):
@@ -183,7 +197,8 @@ with tab1:
                                 img_data = base64.b64decode(acc['character_b64'].split(',')[1])
                                 char_img = Image.open(io.BytesIO(img_data))
                                 prompt_data.append(char_img)
-                                prompt_data[0] += f"\nIMPORTANT VISUAL RULE: I attached a reference image of the main character. The [PROMPT] section MUST be a single cohesive English paragraph that includes: 1) A highly detailed physical description of this person (face, hair, clothing) based on the attached image. 2) Place this exact character in a realistic, professional setting or action related to '{sp}' and the vibe of '{tr}'. Do NOT just describe the person, you MUST describe what they are doing in that specific environment."
+                                # ÉP CÁC TỪ KHÓA NHIẾP ẢNH VÀ ĐẶC ĐIỂM NHẬN DẠNG CHI TIẾT
+                                prompt_data[0] += f"\nIMPORTANT VISUAL RULE: I attached a reference image. The [PROMPT] MUST be a single cohesive English paragraph that includes: 1) EXACT facial extraction (ethnicity, face shape like oval, specific features like moles, eye shape, skin tone, exact hairstyle) from the image. 2) Place this EXACT character in a highly realistic setting interacting with '{sp}' or reflecting '{tr}'. 3) Append these mandatory photography keywords: 'shot on 35mm lens, candid street photography, highly detailed skin texture, pores visible, natural cinematic lighting, photorealistic, 8k, ultra-realistic'. DO NOT make it look plastic or 3D."
                             except: pass
                     
                     res = generate_with_key_rotation(prompt_data)
@@ -191,13 +206,13 @@ with tab1:
                     if "|||" in res:
                         st.session_state.content, st.session_state.prompt = res.split("|||")[0].replace("[CONTENT]", "").strip(), res.split("|||")[1].replace("[PROMPT]", "").strip()
                     else:
-                        st.session_state.content, st.session_state.prompt = res, f"A professional realistic photo about {sp}"
+                        st.session_state.content, st.session_state.prompt = res, f"A photorealistic candid shot about {sp}, 35mm photography"
                 except Exception as e: st.error(f"Lỗi: {e}")
 
     with c2:
-        st.session_state.content = st.text_area("Bài viết:", st.session_state.get('content',''), height=220)
+        st.session_state.content = st.text_area("Bài viết (Chuẩn cá nhân):", st.session_state.get('content',''), height=220)
         copy_button(st.session_state.content, "📋 Copy Content")
-        st.session_state.prompt = st.text_area("Prompt vẽ ảnh:", st.session_state.get('prompt',''), height=150)
+        st.session_state.prompt = st.text_area("Prompt Đạo diễn Hình ảnh (EN):", st.session_state.get('prompt',''), height=150)
         copy_button(st.session_state.prompt, "🖼️ Copy Prompt")
 
 with tab2:
