@@ -155,17 +155,16 @@ with tab1:
         copy_button(st.session_state.prompt, "🖼️ Copy Prompt")
 
 with tab2:
-    st.subheader("🎨 Studio Ảnh (Gemini 3.1 Flash Image)")
+    st.subheader("🎨 Studio Ảnh (Nano Banana Pro)")
     cl, cr = st.columns([1, 1])
     with cl:
         p_final = st.text_area("Xác nhận Lệnh vẽ (Tiếng Anh):", st.session_state.get('prompt',''), height=150)
-        if st.button("🎨 VẼ ẢNH VỚI GEMINI FLASH"):
-            with st.spinner("Đang kết nối API Gemini 3.1 Flash Image..."):
+        if st.button("🎨 VẼ ẢNH VỚI NANO BANANA PRO"):
+            with st.spinner("Đang kết nối API Nano Banana Pro..."):
                 try:
-                    # Chuyển đổi từ :predict sang :generateContent theo chuẩn API Gemini
-                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key={GEMINI_API_KEY}"
+                    # Đổi endpoint sang nano-banana-pro-preview theo yêu cầu của bạn
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/nano-banana-pro-preview:generateContent?key={GEMINI_API_KEY}"
                     
-                    # Cấu trúc Payload chuẩn của Gemini
                     payload = {
                         "contents": [
                             {
@@ -179,7 +178,6 @@ with tab2:
                     
                     if "candidates" in data:
                         import base64
-                        # Bóc tách dữ liệu ảnh từ cấu trúc phản hồi mới
                         parts = data["candidates"][0]["content"]["parts"]
                         b64_img = ""
                         for part in parts:
@@ -189,7 +187,7 @@ with tab2:
                         
                         if b64_img:
                             st.session_state.img_res = base64.b64decode(b64_img)
-                            st.success("Tuyệt vời! Gemini 3.1 Flash đã vẽ xong.")
+                            st.success("Tuyệt vời! Nano Banana Pro đã vẽ xong.")
                         else:
                             st.error("Lỗi: Máy chủ không trả về dữ liệu hình ảnh (inlineData).")
                     elif "error" in data:
@@ -202,7 +200,7 @@ with tab2:
         if 'img_res' in st.session_state:
             try:
                 st.image(st.session_state.img_res, use_container_width=True)
-                st.download_button("📥 Tải ảnh về", st.session_state.img_res, "gemini_image_post.png", "image/png")
+                st.download_button("📥 Tải ảnh về", st.session_state.img_res, "nano_banana_post.png", "image/png")
             except:
                 st.warning("Lỗi hiển thị dữ liệu ảnh.")
 with tab3:
