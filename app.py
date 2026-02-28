@@ -10,8 +10,16 @@ from PIL import Image
 import streamlit.components.v1 as components
 
 # --- CẤU HÌNH TRANG ---
-st.set_page_config(page_title="Smart Compliance Hub - Auto", layout="wide")
+import streamlit as st
+# (Nếu có st.set_page_config thì sửa lại như sau)
+st.set_page_config(page_title="ViralSync Pro", page_icon="🚀", layout="wide")
 
+st.markdown("""
+    <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="color: #6C63FF; font-size: 38px; font-weight: 900;">🚀 VIRALSYNC PRO</h1>
+        <p style="font-size: 16px; color: #666;">Hệ sinh thái Sáng tạo Nội dung & AI Automation Đa nền tảng</p>
+    </div>
+""", unsafe_allow_html=True)
 # --- NÚT COPY JAVASCRIPT ---
 def copy_button(text_to_copy, button_label="Copy"):
     safe_text = text_to_copy.replace("`", "\\`").replace("$", "\\$").replace("\n", "\\n").replace('"', '\\"')
@@ -246,49 +254,63 @@ st.title("🚀 Smart Automation Hub - Nền Tảng")
 tab1, tab2, tab3 = st.tabs(["📝 Bước 1: Content", "🎨 Bước 2: Ảnh AI (Imagen 3)", "📤 Bước 3: Đăng Bài"])
 
 with tab1:
-    # --- CSS ANIMATION CHO MŨI TÊN CHỈ DẪN ---
+    # --- CSS ANIMATION MỚI (Mũi tên cuối dòng, To & Rõ) ---
     st.markdown("""
         <style>
         @keyframes slide-right {
             0% { transform: translateX(0); opacity: 1; }
-            50% { transform: translateX(5px); opacity: 0.5; }
+            50% { transform: translateX(10px); opacity: 0.5; }
             100% { transform: translateX(0); opacity: 1; }
         }
-        .arrow-anim { display: inline-block; animation: slide-right 1s ease-in-out infinite; color: #ff4b4b; font-weight: 900; margin-right: 5px; }
-        .step-title { font-size: 22px; font-weight: 800; color: #2c3e50; margin-bottom: 15px; border-bottom: 2px solid #f0f2f6; padding-bottom: 10px; }
-        .block-title { font-size: 16px; font-weight: 700; color: #6C63FF; margin-top: 15px; margin-bottom: 10px; }
+        .arrow-anim { display: inline-block; animation: slide-right 1s ease-in-out infinite; color: #ff4b4b; font-weight: 900; margin-left: 10px; }
+        .step-title { font-size: 26px; font-weight: 900; color: #1E293B; margin-bottom: 5px; }
+        .step-sub { font-size: 14px; color: #64748B; margin-bottom: 20px; border-bottom: 2px solid #f0f2f6; padding-bottom: 15px; }
+        .block-title { font-size: 18px; font-weight: 700; color: #6C63FF; margin-top: 20px; margin-bottom: 15px; background: #F3F4F6; padding: 8px 15px; border-left: 5px solid #6C63FF; border-radius: 4px; }
         </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="step-title"><span class="arrow-anim">>></span> BƯỚC 1: NGHIÊN CỨU & SÁNG TẠO NỘI DUNG VIRAL</div>', unsafe_allow_html=True)
+    st.markdown('<div class="step-title">BƯỚC 1: NGHIÊN CỨU & TẠO NỘI DUNG VIRAL <span class="arrow-anim">>></span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="step-sub">Hoàn tất 3 bước chuẩn SEO chuyên nghiệp chỉ trong vài cú click chuột.</div>', unsafe_allow_html=True)
     
-    # --- KHỐI 1: THIẾT LẬP CHIẾN DỊCH (CAMPAIGN SETUP) ---
+    # --- KHỐI 1: THIẾT LẬP CHIẾN DỊCH (Giao diện lưới 2 cột chống tràn chữ) ---
     st.markdown('<div class="block-title">📊 1. Cấu Hình Tệp Khách Hàng Mục Tiêu (Targeting)</div>', unsafe_allow_html=True)
     
-    col_t1, col_t2, col_t3, col_t4, col_t5 = st.columns(5)
+    # Hàng 1
+    col_t1, col_t2 = st.columns(2)
     with col_t1:
-        platform = st.selectbox("Nền tảng:", ["Facebook Post", "TikTok Video", "Instagram Reels", "YouTube Shorts", "Threads", "Zalo OA"])
+        platform = st.selectbox("🌐 Nền tảng phân phối:", ["Facebook Post", "TikTok Video", "Shopee Feed/Live", "Instagram Reels", "YouTube Shorts", "Threads", "Zalo OA"])
     with col_t2:
-        role = st.selectbox("Vai trò của bạn:", ["Chuyên gia / Cố vấn", "KOL / KOC Review", "Chủ Doanh Nghiệp / Brand", "Sale / Affiliate", "Idol Livestream"])
-    with col_t3:
-        target_age = st.selectbox("Độ tuổi KH:", ["Gen Z (18-24)", "Millennials (25-34)", "Gen X (35-50)", "Đa thế hệ"])
-    with col_t4:
-        target_region = st.selectbox("Văn hóa Vùng:", ["Toàn quốc", "Miền Nam (Phóng khoáng)", "Miền Bắc (Chỉn chu)", "Miền Trung"])
-    with col_t5:
-        target_city = st.selectbox("Đô thị:", ["Đô thị lớn (Hà Nội, TP.HCM)", "Tỉnh lẻ / Nông thôn", "Không phân biệt"])
+        role = st.selectbox("👤 Vai trò chuyên gia:", ["KOL / KOC Reviewer", "Chuyên gia SEO / Content", "Tuyển dụng / HR", "Dịch vụ Bất Động Sản", "Quảng cáo / Tiếp thị (Ads)", "Chủ Doanh Nghiệp (Brand)", "Idol Livestream", "Sale / Affiliate"])
 
-    # --- KHỐI NÚT TÌM TREND (AI MARKETER) ---
+    # Hàng 2
+    col_t3, col_t4 = st.columns(2)
+    with col_t3:
+        # Chuyển sang Multiselect để khách chọn gộp nhiều tệp tuổi
+        target_age_list = st.multiselect("🎯 Độ tuổi KH (Có thể chọn nhiều):", ["Dưới 18 (Teens)", "18-24 (Gen Z)", "25-34 (Millennials)", "35-44 (Gen X)", "45-54 (Trung niên)", "55+ (Cao tuổi)"], default=["18-24 (Gen Z)"])
+        target_age = ", ".join(target_age_list) if target_age_list else "Mọi lứa tuổi"
+    with col_t4:
+        target_region = st.selectbox("🌍 Phạm vi Văn hóa/Khu vực:", ["Toàn quốc (Việt Nam)", "Miền Nam (Phóng khoáng, trend)", "Miền Bắc (Chỉn chu, sâu sắc)", "Miền Trung (Thực tế)", "Đông Nam Á (SEA)", "Châu Á (Asia)", "Châu Âu (EU)", "Bắc Mỹ (US/CA)", "Toàn cầu (Global)"])
+
+    # Hàng 3
+    col_t5, col_t6 = st.columns(2)
+    with col_t5:
+        target_zone = st.selectbox("🏙️ Cấp độ Đô thị:", ["Trung tâm Đô thị lớn", "Bán kính ngoại ô (50-80km)", "Nông thôn / Tỉnh lẻ", "Khu công nghiệp phức hợp", "Khu sinh thái / Du lịch", "Làng chài / Ven biển"])
+    with col_t6:
+        target_city = st.text_input("📍 Tên Thành phố / Vị trí ghim (Tùy chọn):", placeholder="VD: Quận 1 TP.HCM, Hà Nội, Đà Nẵng...")
+
+    # --- KHỐI NÚT TÌM TREND ---
     if st.button("🔍 AI RÀ QUÉT XU HƯỚNG THỊ TRƯỜNG (TRENDING)", use_container_width=True):
-        with st.spinner(f"Giám đốc Marketing AI đang phân tích dữ liệu {platform} tại {target_region}..."):
+        with st.spinner(f"AI Marketer đang quét dữ liệu {platform} tại {target_region}..."):
             try:
-                q_trend = f"""Bạn là Giám đốc Marketing (CMO) xuất sắc nhất Việt Nam.
+                location_context = f"{target_city} ({target_zone})" if target_city else target_zone
+                q_trend = f"""Bạn là Giám đốc Marketing (CMO) xuất sắc nhất.
                 Hãy phân tích xu hướng MỚI NHẤT hôm nay cho chiến dịch trên '{platform}', với tư cách là '{role}'.
-                Tệp khách hàng mục tiêu: '{target_age}', sống tại '{target_city}', văn hóa '{target_region}'.
-                Hãy tìm ra 1 góc nhìn (Angle) hoặc nỗi đau (Pain-point) đang cực kỳ viral phù hợp với tệp này.
-                Bắt buộc trả về đúng 3 dòng định dạng sau (Tuyệt đối không giải thích thêm):
-                Sản phẩm: [Ngách hoặc sản phẩm cụ thể đang hot, VD: Thời trang công sở, Skincare thuần chay...]
-                Chân dung: [Phân tích tâm lý/nhu cầu của tệp {target_age} tại {target_region}]
-                Angle: [Góc nhìn tiếp cận hoặc Câu nói viral, trend giật gân, nỗi đau thầm kín]"""
+                Tệp khách hàng: '{target_age}', sống tại khu vực '{location_context}', văn hóa '{target_region}'.
+                Hãy tìm ra 1 góc nhìn (Angle) hoặc nỗi đau (Pain-point) đang cực kỳ viral.
+                Bắt buộc trả về đúng 3 dòng định dạng sau:
+                Sản phẩm: [Ngách/Sản phẩm hot, VD: Thời trang công sở, Bất động sản vùng ven...]
+                Chân dung: [Phân tích tâm lý của tệp {target_age} tại {location_context}]
+                Angle: [Góc nhìn tiếp cận, trend giật gân, hoặc nỗi đau thầm kín]"""
                 
                 res_trend = generate_with_key_rotation([q_trend])
                 import re
@@ -298,55 +320,53 @@ with tab1:
                 
                 if sp_match and dt_match and tr_match:
                     st.session_state.k1, st.session_state.k2, st.session_state.trend = sp_match.group(1).strip(), dt_match.group(1).strip(), tr_match.group(1).strip()
-                    st.success("✅ Đã bắt mạch thị trường thành công! Dữ liệu đã được điền vào các ô bên dưới.")
-                else: st.warning("Mạng lưới đang nghẽn, vui lòng thử lại.")
+                    st.success("✅ Đã bắt mạch thị trường thành công! Dữ liệu đã được điền tự động.")
+                else: st.warning("Hệ thống đang nghẽn, vui lòng thử lại.")
             except Exception as e: st.error(f"Lỗi phân tích: {e}")
 
-    # --- KHỐI 2: TINH CHỈNH ĐIỂM CHẠM (TOUCHPOINTS) ---
+    # --- KHỐI 2: TINH CHỈNH ĐIỂM CHẠM (Có gợi ý từ khóa bằng dấu phẩy) ---
     st.markdown('<div class="block-title">🎯 2. Tinh Chỉnh Thông Điệp Cốt Lõi (Core Message)</div>', unsafe_allow_html=True)
-    c_in1, c_in2, c_in3 = st.columns(3)
-    with c_in1: sp = st.text_input("Ngách / Sản phẩm (Product)", st.session_state.get('k1', "Phong cách sống tối giản"))
-    with c_in2: kh = st.text_input("Chân dung Tâm lý (Persona)", st.session_state.get('k2', "Gen Z thích tự do tài chính"))
-    with c_in3: tr = st.text_input("Góc nhìn / Nỗi đau (Angle)", st.session_state.get('trend', "Áp lực đồng trang lứa (Peer pressure)"))
+    c_in1, c_in2 = st.columns(2)
+    with c_in1: 
+        sp = st.text_area("📦 Ngách / Sản phẩm (Product)", st.session_state.get('k1', "Mỹ phẩm thuần chay, da nhạy cảm, trị mụn"), height=80, help="Gợi ý: Nhập các từ khóa cách nhau bằng dấu phẩy để AI hiểu sâu hơn.")
+    with c_in2: 
+        kh = st.text_area("👥 Chân dung Tâm lý (Persona)", st.session_state.get('k2', "Gen Z, thích làm đẹp nhanh, sợ hóa chất"), height=80)
+    
+    tr = st.text_input("💡 Góc nhìn / Nỗi đau (Angle)", st.session_state.get('trend', "Áp lực ngoại hình, peer pressure, chữa lành"), help="Trend hoặc góc nhìn Marketing để chốt sale.")
     
     # --- KHỐI 3: NÚT KÍCH HOẠT SẢN XUẤT ---
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("⏩ XUẤT BẢN NỘI DUNG & LỆNH ĐẠO DIỄN ẢNH", type="primary", use_container_width=True):
-        with st.spinner("AI Copywriter & AI Art Director đang làm việc..."):
+        with st.spinner("AI Copywriter & AI Art Director đang tổng hợp dữ liệu (Bao gồm Ảnh từ Sidebar nếu có)..."):
             try:
-                q_text = f"Write a highly engaging and viral post for {platform} about '{sp}'. The target audience is '{kh}' located in '{target_city}'. Approach this from the angle of '{tr}'. Tone of voice: {role}. Keep it under 200 words, highly conversational, and format it for high conversion. Format: [CONTENT] Vietnamese text here ||| [PROMPT] English image prompt here."
+                location_context = f"{target_city} ({target_zone})" if target_city else target_zone
+                q_text = f"Write a highly engaging and viral post for {platform} about '{sp}'. The target audience is '{kh}' (Age: {target_age}) located in '{location_context}', culture '{target_region}'. Approach this from the angle of '{tr}'. Tone of voice: {role}. Keep it under 200 words, highly conversational, include emojis, and format it for high conversion. Format: [CONTENT] Vietnamese text here ||| [PROMPT] English image prompt here."
                 prompt_data = [q_text]
                 
-                # --- XỬ LÝ ĐA ẢNH TỪ SIDEBAR ---
                 img_instructions = []
-                # Đọc ảnh 1 (Nhân vật chính)
                 if st.session_state.get('char1_b64'):
                     try:
                         prompt_data.append(Image.open(io.BytesIO(base64.b64decode(st.session_state.char1_b64.split(',')[1]))))
-                        img_instructions.append("Image 1 is the MAIN CHARACTER. Extract their exact facial features, ethnicity, and hairstyle.")
+                        img_instructions.append("Image 1 is the MAIN CHARACTER. Extract exact facial features and ethnicity.")
                     except: pass
-                # Đọc ảnh 2 (Nhân vật phụ)
                 if st.session_state.get('char2_b64'):
                     try:
                         prompt_data.append(Image.open(io.BytesIO(base64.b64decode(st.session_state.char2_b64.split(',')[1]))))
-                        img_instructions.append("Image 2 is the SECONDARY CHARACTER. Extract their exact facial features. Place them interacting with the Main Character.")
+                        img_instructions.append("Image 2 is the SECONDARY CHARACTER. Place them interacting with the Main Character.")
                     except: pass
-                # Đọc ảnh Thú cưng
                 if st.session_state.get('pet_b64'):
                     try:
                         prompt_data.append(Image.open(io.BytesIO(base64.b64decode(st.session_state.pet_b64.split(',')[1]))))
-                        img_instructions.append("Image 3 is a PET. Include this exact animal species and fur pattern in the scene.")
+                        img_instructions.append("Image 3 is a PET. Include this exact animal in the scene.")
                     except: pass
-                # Đọc ảnh Bối cảnh
                 if st.session_state.get('bg_b64'):
                     try:
                         prompt_data.append(Image.open(io.BytesIO(base64.b64decode(st.session_state.bg_b64.split(',')[1]))))
-                        img_instructions.append("Image 4 is the REFERENCE BACKGROUND. The environment MUST perfectly match the architectural style, lighting, and mood of this image.")
+                        img_instructions.append("Image 4 is the REFERENCE BACKGROUND. The environment MUST match this architectural style and mood.")
                     except: pass
 
-                # Xây dựng luật Hình ảnh (Visual Rule)
                 if img_instructions:
-                    prompt_data[0] += f"\n\nIMPORTANT VISUAL RULE: I attached reference images. {' '.join(img_instructions)} The [PROMPT] MUST be a cohesive English paragraph placing these specific elements into a realistic scene related to '{sp}' and '{tr}'. STRICT composition: medium environmental shot, 9:16 ratio. STRICTLY NO background blur (Deep Depth of Field). Append: 'photojournalism style, wide angle lens (20mm), highly detailed textures, photorealistic, 8k, natural daylight'."
+                    prompt_data[0] += f"\n\nIMPORTANT VISUAL RULE: I attached reference images. {' '.join(img_instructions)} The [PROMPT] MUST be a cohesive English paragraph placing these specific elements into a realistic scene related to '{sp}' and '{tr}'. STRICT composition: medium environmental shot, 9:16 ratio. STRICTLY NO background blur. Append: 'photojournalism style, wide angle lens (20mm), highly detailed textures, photorealistic, 8k, natural daylight'."
                 else:
                     prompt_data[0] += f"\n\nIMPORTANT VISUAL RULE: Create a highly detailed English image generation prompt describing a realistic scene related to '{sp}' and '{tr}'. STRICT composition: medium environmental shot, 9:16 ratio. STRICTLY NO background blur. Append keywords: 'photojournalism style, wide angle lens (20mm), highly detailed textures, photorealistic, 8k, natural daylight'."
 
@@ -362,12 +382,12 @@ with tab1:
     st.markdown('<div class="block-title">📝 3. Tài Sản Chuyển Đổi (Assets)</div>', unsafe_allow_html=True)
     c_out1, c_out2 = st.columns([1, 1.2])
     with c_out1:
-        st.info("💡 Lệnh Đạo diễn (Prompt) đã được AI tối ưu hóa tỷ lệ 9:16, độ nét 8K và cấu trúc không xóa phông. Bạn có thể chỉnh sửa thêm tiếng Anh tại đây trước khi chuyển sang Bước 2.")
-        st.session_state.prompt = st.text_area("Đạo diễn Hình ảnh / AI Prompt (EN):", st.session_state.get('prompt',''), height=200)
+        st.info("💡 Lệnh Đạo diễn (Prompt) đã được AI tối ưu tỷ lệ 9:16, độ nét 8K. Sẵn sàng cho Bước 2.")
+        st.session_state.prompt = st.text_area("Đạo diễn Hình ảnh / AI Prompt (EN):", st.session_state.get('prompt',''), height=250)
         copy_button(st.session_state.prompt, "🖼️ Copy Prompt")
     with c_out2:
-        st.success(f"📌 Bài viết đã được tối ưu chuẩn văn phong của {st.session_state.get('platform_selected', 'nền tảng')}.")
-        st.session_state.content = st.text_area("Bản thảo Content (VN):", st.session_state.get('content',''), height=200)
+        st.success(f"📌 Bài viết đã được tối ưu chuẩn văn phong đa nền tảng.")
+        st.session_state.content = st.text_area("Bản thảo Content (VN):", st.session_state.get('content',''), height=250)
         copy_button(st.session_state.content, "📋 Copy Content")
 
 with tab2:
