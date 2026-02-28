@@ -419,78 +419,149 @@ with tab1:
         st.session_state.content = st.text_area("Bản thảo Content (VN):", st.session_state.get('content',''), height=250)
         copy_button(st.session_state.content, "📋 Copy Content")
 
+import time
+
 with tab2:
     st.markdown('<div class="step-title">BƯỚC 2: STUDIO ẢNH AI 🎨 <span class="arrow-anim">>></span></div>', unsafe_allow_html=True)
-    st.markdown('<div class="step-sub">Biến ý tưởng thành hình ảnh sắc nét với công nghệ FLUX.1 (Bản quyền thương mại).</div>', unsafe_allow_html=True)
+    st.markdown('<div class="step-sub">Khởi tạo các biến thể hình ảnh độc đáo với đa dạng Động cơ AI (FLUX & Google Gemini).</div>', unsafe_allow_html=True)
 
-    c_img1, c_img2 = st.columns([1.2, 1])
+    c_img1, c_img2 = st.columns([1, 1.4])
     
     with c_img1:
         st.markdown('<div class="block-title">⚙️ 1. Cấu hình Máy ảnh (Camera Settings)</div>', unsafe_allow_html=True)
         
-        # Lệnh Prompt kế thừa từ Bước 1
-        p_final = st.text_area("📝 Lệnh Đạo diễn Hình ảnh (Kế thừa từ Bước 1):", st.session_state.get('prompt',''), height=150, help="Bạn có thể chỉnh sửa hoặc thêm mô tả bằng tiếng Anh tại đây.")
+        p_final = st.text_area("📝 Lệnh Đạo diễn Hình ảnh (EN):", st.session_state.get('prompt',''), height=150, help="Lệnh được kế thừa từ Bước 1.")
         
-        # Cài đặt nâng cao (Tỷ lệ & Phong cách)
+        # --- BỔ SUNG KHỐI LỰA CHỌN ĐỘNG CƠ AI ---
+        ai_model = st.selectbox("🤖 Động cơ AI (Engine):", [
+            "🚀 FLUX.1 Schnell (Miễn phí / Tốc độ cao)",
+            "💎 Gemini 3.1 Flash Image (Preview)",
+            "💎 Gemini 3 Pro Image (Preview)",
+            "💎 Nano Banana Pro (Preview)"
+        ], help="FLUX.1 dùng máy chủ HuggingFace. Gemini dùng API Key của Google.")
+
         col_s1, col_s2 = st.columns(2)
         with col_s1:
-            ratio = st.selectbox("📐 Tỷ lệ khung hình:", ["9:16 (Video Dọc / Story)", "1:1 (Vuông / Post FB)", "16:9 (Video Ngang / YT)", "4:3 (Tiêu chuẩn ảnh)"])
+            ratio = st.selectbox("📐 Tỷ lệ ảnh:", ["9:16 (Story/Reels)", "1:1 (Post FB/Vuông)", "16:9 (Video Ngang)", "4:3 (Tiêu chuẩn)"])
         with col_s2:
-            style = st.selectbox("🎭 Phong cách Render:", ["Photorealistic (Đời thực)", "Cinematic (Điện ảnh)", "3D Pixar / Disney", "Anime / Manga", "Watercolor (Màu nước)"])
+            style = st.selectbox("🎭 Phong cách:", ["Photorealistic", "Cinematic", "3D Pixar", "Anime / Manga", "Watercolor"])
+        
+        num_imgs = st.slider("🔢 Số lượng biến thể:", 1, 4, 2, help="Tạo nhiều ảnh để so sánh (Tối đa 4 để tránh nghẽn API).")
         
         st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("🎨 KHỞI ĐỘNG STUDIO VÀ VẼ ẢNH NGAY", type="primary", use_container_width=True):
+        if st.button(f"🎨 KHỞI ĐỘNG STUDIO VÀ VẼ {num_imgs} ẢNH", type="primary", use_container_width=True):
             if not p_final.strip():
                 st.error("⚠️ Vui lòng nhập Lệnh Đạo diễn (Prompt) trước khi vẽ!")
             else:
-                with st.spinner("Đang kết nối Cỗ máy Đồ họa FLUX.1 Schnell... (Vui lòng đợi 10-25 giây)"):
+                st.session_state.img_list = []
+                with st.spinner(f"Đang gọi {ai_model.split(' ')[1]} render {num_imgs} biến thể..."):
                     try:
-                        # 1. Thuật toán tự động tính toán Pixel dựa trên Tỷ lệ
-                        w, h = 768, 1344 # Mặc định 9:16
-                        if ratio.startswith("1:1"): w, h = 1024, 1024
-                        elif ratio.startswith("16:9"): w, h = 1344, 768
-                        elif ratio.startswith("4:3"): w, h = 1152, 896
+                        # 1. Tính toán Pixel & Tẩy tỷ lệ cũ
+                        w, h = 768, 1344
+                        ratio_str = "9:16"
+                        if ratio.startswith("1:1"): w, h, ratio_str = 1024, 1024, "1:1"
+                        elif ratio.startswith("16:9"): w, h, ratio_str = 1344, 768, "16:9"
+                        elif ratio.startswith("4:3"): w, h, ratio_str = 1152, 896, "4:3"
                         
-                        # 2. Bộ lọc Phong cách (Tự động chèn siêu từ khóa nhiếp ảnh)
-                        style_prompts = {
-                            "Photorealistic (Đời thực)": "masterpiece, highly detailed, photorealistic, 8k resolution, ultra-detailed, RAW photo, highly detailed skin texture",
-                            "Cinematic (Điện ảnh)": "cinematic lighting, dramatic shadows, epic composition, anamorphic lens flare, movie still, volumetric lighting",
-                            "3D Pixar / Disney": "3D render, Pixar style, Disney style, cute, octane render, Unreal Engine 5, smooth lighting",
-                            "Anime / Manga": "anime artwork, Studio Ghibli style, vibrant colors, flat shading, masterpiece, trending on artstation",
-                            "Watercolor (Màu nước)": "watercolor painting, brush strokes, artistic, vibrant, soft edges, masterpiece"
-                        }
-                        final_run_prompt = f"{p_final}, {style_prompts.get(style, '')}"
+                        clean_prompt = p_final.replace("9:16 ratio", f"{ratio_str} ratio").replace("9:16", ratio_str)
 
-                        # 3. Kết nối API Hugging Face
-                        hf_headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-                        model_url = "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell"
-                        
-                        payload = {"inputs": final_run_prompt, "parameters": {"width": w, "height": h}}
-                        res = requests.post(model_url, headers=hf_headers, json=payload, timeout=45)
-                        
-                        if res.status_code == 200:
-                            st.session_state.img_res = res.content
-                            st.success("✅ Kết xuất hình ảnh thành công!")
-                        elif res.status_code == 503: 
-                            st.error("⚠️ Máy chủ Đồ họa đang khởi động. Vui lòng đợi 20 giây và bấm lại.")
-                        else: 
-                            st.error(f"❌ Lỗi máy chủ (Mã: {res.status_code}).")
-                    except Exception as e: st.error(f"Lỗi kết nối: {e}")
+                        # 2. Bộ lọc Phong cách & Xào trộn góc máy
+                        style_prompts = {
+                            "Photorealistic": "masterpiece, photorealistic, 8k resolution, RAW photo",
+                            "Cinematic": "cinematic lighting, dramatic shadows, epic composition, movie still",
+                            "3D Pixar": "3D render, Pixar style, Disney style, octane render",
+                            "Anime / Manga": "anime artwork, Studio Ghibli style, vibrant colors",
+                            "Watercolor": "watercolor painting, brush strokes, artistic"
+                        }
+                        camera_angles = [
+                            "eye-level shot, symmetrical balance", 
+                            "low angle shot, dynamic perspective", 
+                            "slightly high angle, showing environment", 
+                            "dutch angle, cinematic movement"
+                        ]
+
+                        # --- LOGIC GỌI API THEO MODEL ---
+                        if "FLUX" in ai_model:
+                            hf_headers = {"Authorization": f"Bearer {HF_TOKEN}"} # Đảm bảo bạn có HF_TOKEN ở trên
+                            model_url = "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell"
+                            
+                            for i in range(num_imgs):
+                                st.toast(f"Đang vẽ ảnh {i+1}/{num_imgs} (FLUX)...")
+                                run_prompt = f"{clean_prompt}, {style_prompts.get(style, '')}, {camera_angles[i % 4]}"
+                                payload = {"inputs": run_prompt, "parameters": {"width": w, "height": h}}
+                                res = requests.post(model_url, headers=hf_headers, json=payload, timeout=50)
+                                
+                                if res.status_code == 200:
+                                    st.session_state.img_list.append(res.content)
+                                elif res.status_code == 429:
+                                    st.markdown('<p style="color:red; font-weight:bold; font-size: 16px;">🚨 Token trải nghiệm đã hết, hãy chờ một lát hoặc dùng hệ thống khác.</p>', unsafe_allow_html=True)
+                                    break
+                                time.sleep(1)
+
+                        else:
+                            # LOGIC CHO GOOGLE GEMINI MODELS
+                            gemini_model_name = "models/gemini-3.1-flash-image-preview"
+                            if "3 Pro" in ai_model: gemini_model_name = "models/gemini-3-pro-image-preview"
+                            elif "Nano Banana" in ai_model: gemini_model_name = "models/nano-banana-pro-preview"
+
+                            # Tự động lấy API key từ hệ thống xoay vòng của bạn (nếu có GEMINI_API_KEYS)
+                            api_key = GEMINI_API_KEYS[0] if 'GEMINI_API_KEYS' in globals() and GEMINI_API_KEYS else ""
+                            
+                            for i in range(num_imgs):
+                                st.toast(f"Đang vẽ ảnh {i+1}/{num_imgs} ({ai_model.split(' ')[1]})...")
+                                run_prompt = f"{clean_prompt}, {style_prompts.get(style, '')}, {camera_angles[i % 4]}"
+                                
+                                url = f"https://generativelanguage.googleapis.com/v1beta/{gemini_model_name}:predict?key={api_key}"
+                                payload = {
+                                    "instances": [{"prompt": run_prompt}],
+                                    "parameters": {"sampleCount": 1}
+                                }
+                                
+                                res = requests.post(url, json=payload, timeout=60)
+                                
+                                # --- BẪY LỖI QUOTA (429 HOẶC RESOURCE EXHAUSTED) ---
+                                if res.status_code == 200:
+                                    data = res.json()
+                                    if "predictions" in data and len(data["predictions"]) > 0:
+                                        b64_img = data["predictions"][0].get("bytesBase64")
+                                        if b64_img:
+                                            st.session_state.img_list.append(base64.b64decode(b64_img))
+                                elif res.status_code == 429 or "quota" in res.text.lower() or "exhausted" in res.text.lower():
+                                    st.markdown('<p style="color:red; font-weight:bold; font-size: 16px;">🚨 Token trải nghiệm đã hết, hãy lựa chọn FLUX 1.0 để tiếp tục</p>', unsafe_allow_html=True)
+                                    break # Dừng vòng lặp ngay lập tức
+                                else:
+                                    # Các lỗi khác không phải quota
+                                    st.error(f"Lỗi kết nối Gemini (Mã {res.status_code})")
+                                    break
+                                time.sleep(1.5)
+
+                        if len(st.session_state.img_list) > 0:
+                            st.success(f"✅ Đã kết xuất thành công {len(st.session_state.img_list)} hình ảnh từ {ai_model.split(' ')[1]}!")
+
+                    except Exception as e:
+                        # Bẫy lỗi phụ khi Exception quăng ra có chứa chữ Quota
+                        err_str = str(e).lower()
+                        if "quota" in err_str or "429" in err_str or "exhausted" in err_str:
+                            st.markdown('<p style="color:red; font-weight:bold; font-size: 16px;">🚨 Token trải nghiệm đã hết, hãy lựa chọn FLUX 1.0 để tiếp tục</p>', unsafe_allow_html=True)
+                        else:
+                            st.error(f"Lỗi hệ thống đồ họa: {e}")
 
     with c_img2:
         st.markdown('<div class="block-title">🖼️ 2. Màn hình Kiểm duyệt (Preview)</div>', unsafe_allow_html=True)
         
-        # Nếu đã có ảnh thì hiển thị, chưa có thì hiển thị khung đứt nét chuyên nghiệp
-        if 'img_res' in st.session_state and st.session_state.img_res:
-            st.image(st.session_state.img_res, use_container_width=True, caption=f"Tỷ lệ: {ratio.split(' ')[0]} | Phong cách: {style.split(' ')[0]}")
-            st.download_button("📥 TẢI CHẤT LƯỢNG CAO (Không Logo)", st.session_state.img_res, "viralsync_pro_image.png", "image/png", use_container_width=True)
-            st.info("👉 Vuốt sang Bước 3 để lên lịch hoặc đăng bài tự động.")
+        # Giao diện Lưới (Grid) hiển thị đa ảnh
+        if 'img_list' in st.session_state and st.session_state.img_list:
+            cols = st.columns(2)
+            for idx, img_data in enumerate(st.session_state.img_list):
+                with cols[idx % 2]:
+                    st.image(img_data, use_container_width=True, caption=f"Biến thể {idx+1}")
+                    st.download_button(f"📥 Tải Ảnh {idx+1}", img_data, f"viralsync_art_{idx+1}.png", "image/png", use_container_width=True, key=f"dl_btn_{idx}")
         else:
             st.markdown("""
             <div style="border: 3px dashed #E5E7EB; border-radius: 12px; padding: 60px 20px; text-align: center; color: #9CA3AF; background-color: #F9FAFB;">
-                <h3 style="margin-bottom: 10px; color: #6B7280;">Chưa có dữ liệu hình ảnh</h3>
-                <p style="font-size: 14px;">Hãy kiểm tra Lệnh đạo diễn và bấm Khởi động Studio ở khung bên trái để xem kết quả tại đây.</p>
-                <div style="font-size: 40px; margin-top: 15px;">📸</div>
+                <h3 style="margin-bottom: 10px; color: #6B7280;">Khu Vực Hiển Thị Hình Ảnh</h3>
+                <p style="font-size: 14px;">Chọn động cơ AI, số lượng và bấm Khởi động Studio bên trái để xuất bản hàng loạt biến thể.</p>
+                <div style="font-size: 40px; margin-top: 15px;">🖼️</div>
             </div>
             """, unsafe_allow_html=True)
 with tab3:
