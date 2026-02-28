@@ -232,9 +232,75 @@ with tab2:
         if 'img_res' in st.session_state:
             st.image(st.session_state.img_res, use_container_width=True)
 with tab3:
-    st.header("📤 Trạm Đăng Bài")
+    st.header("📤 Trạm Đăng Bài Tự Động")
     if st.session_state.get('selected_fb'):
-        st.success(f"Đã nạp Nick: **{st.session_state.selected_fb}**")
-        if st.button("🚀 KÍCH HOẠT ROBOT"):
-            st.info("Module Playwright đang chờ cập nhật...")
-    else: st.error("Hãy chọn nick ở Sidebar.")
+        acc = st.session_state.accounts[st.session_state.selected_fb]
+        
+        col_l, col_r = st.columns([1, 1.5])
+        with col_l:
+            st.success(f"Đã nạp Nick: **{st.session_state.selected_fb}**")
+            st.info("Robot sử dụng mbasic.facebook.com để đăng bài an toàn, chống Checkpoint.")
+            
+            if st.button("🚀 KÍCH HOẠT ROBOT ĐĂNG BÀI"):
+                if not st.session_state.get('content') or not st.session_state.get('img_res'):
+                    st.error("❌ Vui lòng tạo Bài viết (Bước 1) và Hình ảnh (Bước 2) trước khi đăng!")
+                else:
+                    with st.status("🤖 Robot đang thực thi...", expanded=True) as status:
+                        try:
+                            st.write("1. Đang khởi tạo môi trường giả lập...")
+                            from playwright.sync_api import sync_playwright
+                            import tempfile
+                            
+                            # Hàm chuyển đổi Cookie thô sang chuẩn Playwright
+                            def parse_cookies(cookie_string):
+                                cookies = []
+                                for item in cookie_string.split(';'):
+                                    if '=' in item:
+                                        name, value = item.strip().split('=', 1)
+                                        cookies.append({'name': name, 'value': value, 'domain': '.facebook.com', 'path': '/'})
+                                return cookies
+
+                            # Lưu ảnh từ bộ nhớ tạm ra file vật lý để Robot tải lên
+                            with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
+                                tmp.write(st.session_state.img_res)
+                                img_path = tmp.name
+
+                            st.write("2. Đang mở trình duyệt và bơm Cookies...")
+                            with sync_playwright() as p:
+                                browser = p.chromium.launch(headless=True)
+                                context = browser.new_context()
+                                context.add_cookies(parse_cookies(acc['cookies']))
+                                page = context.new_page()
+
+                                st.write("3. Đang truy cập Facebook mbasic...")
+                                page.goto("https://mbasic.facebook.com/")
+                                
+                                st.write("4. Đang tải hình ảnh lên...")
+                                page.click("input[name='view_photo']")
+                                page.set_input_files("input[type='file']", img_path)
+                                page.click("input[name='add_photo_done']")
+                                
+                                st.write("5. Đang nhập nội dung bài viết...")
+                                page.fill("textarea[name='xc_message']", st.session_state.content)
+                                
+                                st.write("6. Đang bấm Đăng bài...")
+                                page.click("input[name='view_post']")
+                                
+                                browser.close()
+                                
+                            status.update(label="✅ ĐĂNG BÀI THÀNH CÔNG LÊN FACEBOOK!", state="complete")
+                            st.balloons()
+                            
+                        except Exception as e:
+                            status.update(label="❌ Lỗi trong quá trình Robot chạy", state="error")
+                            st.error(f"Chi tiết lỗi: {e}")
+                            
+        with col_r:
+            st.markdown("**Bản xem trước Nội dung:**")
+            st.info(st.session_state.get('content', 'Chưa có bài viết...'))
+            if st.session_state.get('img_res'):
+                st.image(st.session_state.img_res, width=250)
+            else:
+                st.warning("Chưa có hình ảnh...")
+    else: 
+        st.error("Vui lòng chọn hoặc nạp tài khoản Facebook ở Sidebar trước!")
