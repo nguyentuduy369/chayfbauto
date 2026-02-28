@@ -145,11 +145,11 @@ st.title("🚀 Smart Automation Hub - Nền Tảng")
 tab1, tab2, tab3 = st.tabs(["📝 Bước 1: Content", "🎨 Bước 2: Ảnh AI (Imagen 3)", "📤 Bước 3: Đăng Bài"])
 
 with tab1:
-    st.subheader("🎯 Bảng Điều Khiển Nội Dung (Đa Ngành Nghề)")
+    st.subheader("🎯 Bảng Điều Khiển Nội Dung (Bản Thương Mại)")
     
     col_f1, col_f2, col_f3 = st.columns(3)
     with col_f1:
-        role = st.selectbox("Vai trò của bạn:", ["KOL / KOC Review", "Sale / Bán hàng", "Chuyên gia / Đào tạo", "Idol Livestream", "Chủ Doanh Nghiệp"])
+        role = st.selectbox("Vai trò:", ["KOL / KOC Review", "Sale / Bán hàng", "Chuyên gia / Đào tạo", "Idol Livestream", "Chủ Doanh Nghiệp"])
     with col_f2:
         target_age = st.selectbox("Độ tuổi Khách hàng:", ["Gen Z (18-24 tuổi)", "Millennials (25-34 tuổi)", "Trung niên (35-50 tuổi)", "Mọi lứa tuổi"])
     with col_f3:
@@ -158,18 +158,17 @@ with tab1:
     c1, c2 = st.columns([1, 1.2])
     with c1:
         if st.button("🔍 Phân tích Top Trend Hôm nay", use_container_width=True):
-            with st.spinner(f"Đang phân tích thị trường cho {role}..."):
+            with st.spinner(f"Đang phân tích dữ liệu mạng xã hội cho {role}..."):
                 try:
-                    # PROMPT MỚI: Ép AI "tẩy não" mảng pháp lý nếu không phải Chủ Doanh Nghiệp
-                    q_trend = f"""Bạn là Chuyên gia phân tích dữ liệu mạng xã hội (TikTok/Facebook Trend) xuất sắc nhất.
-                    LỆNH TỐI QUAN TRỌNG: Xóa bỏ hoàn toàn bộ nhớ về "Trạm Tuân Thủ", "Pháp lý", "B2B", "Doanh nghiệp" nếu Vai trò dưới đây không phải là Chủ Doanh Nghiệp.
+                    q_trend = f"""Bạn là Chuyên gia phân tích dữ liệu mạng xã hội hot trend hàng đầu Việt Nam.
+                    LỆNH TỐI QUAN TRỌNG: Bạn KHÔNG ĐƯỢC PHÉP dùng các từ khóa như 'Tuân Thủ', 'Pháp lý', 'Hệ thống tự động', 'Hỗ trợ tự động', 'B2B', 'Quản lý doanh nghiệp' trong chủ đề hoặc trend, TRỪ KHI vai trò người dùng chọn dưới đây là 'Chủ Doanh Nghiệp'.
                     Hãy phân tích xu hướng MỚI NHẤT hôm nay cho vai trò '{role}', nhắm đến '{target_age}', tại văn hóa '{target_region}'.
-                    - Nếu là Idol/KOL/Sale: Bắt buộc chọn các chủ đề B2C hot như: Mỹ phẩm, Thời trang, Ẩm thực, Đồ công nghệ, Đồ gia dụng tiện ích.
-                    - Trend phải là các từ lóng (slang), câu nói viral, drama giới trẻ, hoặc phong cách sống đang thịnh hành.
-                    Bắt buộc trả về đúng 3 dòng định dạng sau:
-                    Sản phẩm: [Tên 1 sản phẩm/chủ đề cụ thể, VD: Son tint bóng, Áo babytee, Nồi chiên không dầu...]
+                    - Nếu là Idol/KOL/Sale: Bắt buộc chọn các chủ đề B2C hot (Mỹ phẩm, Thời trang, Ẩm thực, Đồ công nghệ...).
+                    - Trend phải là các câu nói viral, lóng giới trẻ (slang), drama hot, sự kiện mua sắm, hoặc nỗi đau (pain point) đang được quan tâm nhất hôm nay.
+                    Bắt buộc trả về đúng 3 dòng định dạng sau (Tuyệt đối không giải thích thêm):
+                    Sản phẩm: [Tên 1 chủ đề/sản phẩm cụ thể phù hợp trend]
                     Đối tượng: [Chi tiết tệp {target_age} tại {target_region}]
-                    Trend: [1 Câu nói viral, trend TikTok, hoặc nỗi đau mua sắm đang hot]"""
+                    Trend: [1 Câu nói viral, nỗi đau mua sắm, hoặc phong cách sống đang hot]"""
                     
                     res_trend = generate_with_key_rotation([q_trend])
                     
@@ -179,12 +178,9 @@ with tab1:
                     tr_match = re.search(r'Trend:\s*(.*)', res_trend)
                     
                     if sp_match and dt_match and tr_match:
-                        st.session_state.k1 = sp_match.group(1).strip()
-                        st.session_state.k2 = dt_match.group(1).strip()
-                        st.session_state.trend = tr_match.group(1).strip()
+                        st.session_state.k1, st.session_state.k2, st.session_state.trend = sp_match.group(1).strip(), dt_match.group(1).strip(), tr_match.group(1).strip()
                         st.success("Đã rà quét và nạp Trend thành công!")
-                    else:
-                        st.warning("Dữ liệu trả về chưa chuẩn, vui lòng bấm lại.")
+                    else: st.warning("Gemini đang bận, vui lòng bấm lại.")
                 except Exception as e: st.error(f"Lỗi lấy trend: {e}")
 
         st.divider()
@@ -205,15 +201,15 @@ with tab1:
                                 img_data = base64.b64decode(acc['character_b64'].split(',')[1])
                                 char_img = Image.open(io.BytesIO(img_data))
                                 prompt_data.append(char_img)
-                                prompt_data[0] += f"\nIMPORTANT VISUAL RULE: I attached a reference image. The [PROMPT] MUST be a single cohesive English paragraph that includes: 1) EXACT facial extraction (ethnicity, face shape like oval, specific features like moles, eye shape, skin tone, exact hairstyle) from the image. 2) Place this EXACT character in a highly realistic setting interacting with '{sp}' or reflecting '{tr}'. 3) Append these mandatory photography keywords: 'shot on 35mm lens, candid street photography, highly detailed skin texture, pores visible, natural cinematic lighting, photorealistic, 8k, ultra-realistic'. DO NOT make it look plastic or 3D."
+                                # ÉP BỐ CỤC MỚI: Tỷ lệ 9:16 và lùi góc máy ra xa
+                                prompt_data[0] += f"\nIMPORTANT VISUAL RULE: I attached a reference image. The [PROMPT] MUST be a single cohesive English paragraph that includes: 1) STRICT composition requirement: it MUST be a medium vertical portrait shot, 9:16 ratio, portrait orientation, framing from head to mid-torso, ensure a significant and clear portion of the specified realistic environment is visible behind and around the character. DO NOT make it a close-up face shot. 2) EXACT facial extraction (face shape, specific features like moles, ethnicity, eye shape, hairstyle) from the image. 3) Place this EXACT character interacting with '{sp}' or reflecting '{tr}'. 4) Append these photography keywords: 'shot on 35mm lens, candid photography, highly detailed skin texture, pores visible, natural cinematic lighting, photorealistic, 8k, ultra-realistic'."
                             except: pass
                     
                     res = generate_with_key_rotation(prompt_data)
                     
                     if "|||" in res:
                         st.session_state.content, st.session_state.prompt = res.split("|||")[0].replace("[CONTENT]", "").strip(), res.split("|||")[1].replace("[PROMPT]", "").strip()
-                    else:
-                        st.session_state.content, st.session_state.prompt = res, f"A photorealistic candid shot about {sp}, 35mm photography"
+                    else: st.session_state.content, st.session_state.prompt = res, f"A photorealistic candid shot about {sp}, 35mm photography"
                 except Exception as e: st.error(f"Lỗi: {e}")
 
     with c2:
@@ -229,14 +225,28 @@ with tab2:
         p_final = st.text_area("Xác nhận Lệnh vẽ:", st.session_state.get('prompt',''), height=150)
         
         if st.button("🎨 VẼ ẢNH NGAY"):
-            with st.spinner("Đang kết nối FLUX.1..."):
+            with st.spinner("Đang kết nối FLUX.1 (Cấu hình 9:16)..."):
                 try:
                     hf_headers = {"Authorization": f"Bearer {HF_TOKEN}"}
                     model_url = "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell"
-                    res = requests.post(model_url, headers=hf_headers, json={"inputs": p_final}, timeout=40)
+                    
+                    # CẤU HÌNH API MỚI: Ép tỷ lệ 9:16 chính xác bằng cách xác định width/height
+                    # Tương đương: 1024x1820 pixels
+                    payload = {
+                        "inputs": p_final,
+                        "parameters": {
+                            "width": 1024,
+                            "height": 1820
+                        }
+                    }
+                    
+                    res = requests.post(model_url, headers=hf_headers, json=payload, timeout=40)
+                    
                     if res.status_code == 200:
                         st.session_state.img_res = res.content
-                        st.success("Tạo ảnh thành công!")
+                        st.success("Tạo ảnh thành công (9:16 chính xác)!")
+                    elif res.status_code == 503: 
+                        st.error("Máy chủ HF đang khởi động model. Vui lòng đợi 20 giây và bấm lại.")
                     else: 
                         st.error(f"HF lỗi {res.status_code}")
                 except Exception as e: st.error(f"Lỗi: {e}")
@@ -244,6 +254,8 @@ with tab2:
     with cr:
         if 'img_res' in st.session_state:
             st.image(st.session_state.img_res, use_container_width=True)
+            # Thêm nút tải xuống ảnh chuẩn
+            st.download_button("📥 Tải ảnh chuẩn (9:16)", st.session_state.img_res, "viral_post_9_16.png", "image/png")
 
 with tab3:
     st.header("📤 Trạm Đăng Bài (Meta Graph API - Tuân Thủ 100%)")
