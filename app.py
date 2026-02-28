@@ -156,13 +156,13 @@ with tab1:
         copy_button(st.session_state.prompt, "🖼️ Copy Prompt")
 
 with tab2:
-    st.subheader("🎨 Studio Ảnh (Smart Compliance Hub - Ổn định)")
+    st.subheader("🎨 Studio Ảnh (Smart Compliance Hub)")
     cl, cr = st.columns([1, 1])
     with cl:
-        engine = st.selectbox("Lựa chọn Máy chủ (Bền vững):", [
-            "1. Stable Diffusion v1.5 (Cổ điển - Nhẹ & Nhanh)",
-            "2. Stable Diffusion v2.1 (Nâng cao)",
-            "3. Pollinations (Máy chủ độc lập)"
+        engine = st.selectbox("Lựa chọn Máy chủ (Model Mở 100%):", [
+            "1. FLUX.1 Schnell (Nhanh & Sắc nét - HuggingFace)",
+            "2. OpenJourney (Phong cách Nghệ thuật - HuggingFace)",
+            "3. Pollinations (Máy chủ Độc lập)"
         ])
         p_final = st.text_area("Xác nhận Lệnh vẽ (Tiếng Anh):", st.session_state.get('prompt',''), height=150)
         
@@ -174,22 +174,22 @@ with tab2:
                         import random
                         import urllib.parse
                         seed = random.randint(1, 1000000)
-                        # Dùng urllib.parse để xử lý triệt để lỗi ký tự đặc biệt/xuống dòng
+                        # Xử lý chuỗi an toàn
                         safe_prompt = urllib.parse.quote(p_final.replace('\n', ' '))
-                        url = f"https://image.pollinations.ai/prompt/{safe_prompt}?nologo=true&seed={seed}"
+                        url = f"https://image.pollinations.ai/prompt/{safe_prompt}?nologo=true&seed={seed}&width=1024&height=1024"
                         res = requests.get(url, timeout=30)
                         
-                        if res.status_code == 200 and 'image' in res.headers.get('content-type', ''):
+                        if res.status_code == 200:
                             img_bytes = res.content
                         else:
-                            st.error("Pollinations đang quá tải. Hãy thử máy chủ 1 hoặc 2.")
+                            st.error(f"Pollinations báo lỗi {res.status_code}. Hãy thử máy chủ 1 hoặc 2.")
                     else:
                         hf_headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-                        # CẬP NHẬT TÊN MIỀN MỚI ROUTER.HUGGINGFACE.CO
-                        if "v1.5" in engine:
-                            model_url = "https://router.huggingface.co/hf-inference/models/runwayml/stable-diffusion-v1-5"
+                        # Sử dụng các model public không cần xác nhận điều khoản
+                        if "FLUX" in engine:
+                            model_url = "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell"
                         else:
-                            model_url = "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-2-1"
+                            model_url = "https://router.huggingface.co/hf-inference/models/prompthero/openjourney"
 
                         res = requests.post(model_url, headers=hf_headers, json={"inputs": p_final}, timeout=40)
                         
@@ -198,7 +198,6 @@ with tab2:
                         elif res.status_code == 503:
                             st.error("Máy chủ đang khởi động (Mã 503). Vui lòng đợi 20 giây và bấm nút vẽ lại.")
                         else:
-                            # Báo lỗi chi tiết để bắt bệnh nếu HF tiếp tục chặn
                             err_msg = res.json().get('error', 'Không rõ lỗi') if 'application/json' in res.headers.get('content-type', '') else res.text
                             st.error(f"HF báo lỗi {res.status_code}: {err_msg}")
 
@@ -214,7 +213,7 @@ with tab2:
                 st.image(st.session_state.img_res, use_container_width=True)
                 st.download_button("📥 Tải ảnh về", st.session_state.img_res, "smart_compliance_hub_post.png", "image/png")
             except Exception as e:
-                st.warning("Lỗi hiển thị dữ liệu ảnh. Vui lòng bấm vẽ lại.")
+                st.warning("Lỗi hiển thị dữ liệu. Vui lòng bấm vẽ lại.")
 with tab3:
     st.header("📤 Trạm Đăng Bài")
     if st.session_state.get('selected_fb'):
