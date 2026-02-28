@@ -201,15 +201,15 @@ with tab1:
                                 img_data = base64.b64decode(acc['character_b64'].split(',')[1])
                                 char_img = Image.open(io.BytesIO(img_data))
                                 prompt_data.append(char_img)
-                                # ÉP BỐ CỤC MỚI: Tỷ lệ 9:16 và lùi góc máy ra xa
-                                prompt_data[0] += f"\nIMPORTANT VISUAL RULE: I attached a reference image. The [PROMPT] MUST be a single cohesive English paragraph that includes: 1) STRICT composition requirement: it MUST be a medium vertical portrait shot, 9:16 ratio, portrait orientation, framing from head to mid-torso, ensure a significant and clear portion of the specified realistic environment is visible behind and around the character. DO NOT make it a close-up face shot. 2) EXACT facial extraction (face shape, specific features like moles, ethnicity, eye shape, hairstyle) from the image. 3) Place this EXACT character interacting with '{sp}' or reflecting '{tr}'. 4) Append these photography keywords: 'shot on 35mm lens, candid photography, highly detailed skin texture, pores visible, natural cinematic lighting, photorealistic, 8k, ultra-realistic'."
+                                # ÉP BỐ CỤC PHÓNG VIÊN: Không xóa phông, bối cảnh rõ nét 100%
+                                prompt_data[0] += f"\nIMPORTANT VISUAL RULE: I attached a reference image of the character. The [PROMPT] section MUST be a single cohesive English paragraph that includes: 1) STRICT composition requirement: it MUST be a medium environmental portrait shot, 9:16 ratio, portrait orientation, framing from head to mid-torso. The surrounding environment MUST tell a story. STRICTLY DO NOT use shallow depth of field or background blur (bokeh); the ENTIRE background must remain in sharp focus (Deep Depth of Field). DO NOT make it a typical blurry portrait. 2) EXACT facial extraction (face shape, features like moles, ethnicity, hairstyle) from the image. 3) Place this EXACT character in a complex, realistic outdoor scenic or environmental environment relevant to '{sp}' and '{tr}', styled like a news reportage photo. The background elements must be distinct and detailed, showing the full context of the story. 4) Append these mandatory photography keywords: 'photojournalism style, wide angle lens (20mm), deep depth of field, sharp background, environmental portrait, highly detailed textures, photorealistic, 8k, ultra-realistic, natural daylight'."
                             except: pass
                     
                     res = generate_with_key_rotation(prompt_data)
                     
                     if "|||" in res:
                         st.session_state.content, st.session_state.prompt = res.split("|||")[0].replace("[CONTENT]", "").strip(), res.split("|||")[1].replace("[PROMPT]", "").strip()
-                    else: st.session_state.content, st.session_state.prompt = res, f"A photorealistic candid shot about {sp}, 35mm photography"
+                    else: st.session_state.content, st.session_state.prompt = res, f"A photojournalistic environmental shot about {sp}, sharp background focus"
                 except Exception as e: st.error(f"Lỗi: {e}")
 
     with c2:
