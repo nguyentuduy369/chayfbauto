@@ -45,16 +45,34 @@ def safe_display_image(url, width=None):
     except Exception:
         st.warning("Lỗi tải ảnh.")
 
-# --- LẤY API KEYS ---
+import base64
+
+# --- LẤY API KEYS & CẤU HÌNH ---
 try:
-    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
+    GEMINI_KEYS = st.secrets["GEMINI_KEYS"].split(",")
     HF_TOKEN = st.secrets["HF_TOKEN"]
-    genai.configure(api_key=GEMINI_API_KEY)
 except:
-    st.error("❌ Thiếu API Key trong thiết lập Secrets!")
+    st.error("❌ Thiếu GEMINI_KEYS hoặc HF_TOKEN trong thiết lập Secrets!")
     st.stop()
 
-# --- QUẢN LÝ DỮ LIỆU ---
+# --- HÀM XOAY VÒNG API KEY GEMINI ---
+def generate_with_key_rotation(prompt_text):
+    for i, key in enumerate(GEMINI_KEYS):
+        try:
+            genai.configure(api_key=key.strip())
+            model = genai.GenerativeModel('gemini-2.5-flash')
+            return model.generate_content(prompt_text).text
+        except Exception as e:
+            err_str = str(e).lower()
+            if "429" in err_str or "quota" in err_str or "exhausted" in err_str:
+                if i < len(GEMINI_KEYS) - 1:
+                    continue # Bị giới hạn -> Chuyển sang Key tiếp theo
+                else:
+                    raise Exception("Tất cả API Keys đều đã hết hạn mức. Vui lòng thêm Key mới!")
+            else:
+                raise e # Lỗi khác thì báo đỏ luôn
+
+# --- QUẢN LÝ DỮ LIỆU & MÃ HÓA ẢNH ---
 def save_accounts(accounts):
     with open('accounts.json', 'w', encoding='utf-8') as f:
         json.dump(accounts, f, ensure_ascii=False, indent=4)
@@ -62,38 +80,16 @@ def save_accounts(accounts):
 def load_accounts():
     if os.path.exists('accounts.json'):
         try:
-            with open('accounts.json', 'r', encoding='utf-8') as f:
-                return json.load(f)
+            with open('accounts.json', 'r', encoding='utf-8') as f: return json.load(f)
         except: return {}
     return {}
 
+def image_to_base64(uploaded_file):
+    if uploaded_file is not None:
+        return f"data:image/png;base64,{base64.b64encode(uploaded_file.getvalue()).decode()}"
+    return ""
+
 if 'accounts' not in st.session_state: st.session_state.accounts = load_accounts()
-
-# --- HÀM QUÉT INFO FB (CẢI TIẾN CHỐNG SẬP) ---
-def fetch_fb_profile(cookie_str):
-    try:
-        uid_match = re.search(r'c_user=(\d+)', cookie_str)
-        uid = uid_match.group(1) if uid_match else ""
-        if not uid: return "Lỗi Cookie (Không thấy UID)", "", ""
-
-        avatar = f"https://graph.facebook.com/{uid}/picture?type=large"
-        
-        # Đặt tên mặc định nếu bị FB chặn lấy dữ liệu
-        name = f"User {uid}"
-        try:
-            headers = {'cookie': cookie_str, 'user-agent': 'Mozilla/5.0'}
-            res = requests.get(f"https://mbasic.facebook.com/{uid}", headers=headers, timeout=5)
-            name_match = re.search(r'<title>(.*?)</title>', res.text)
-            if name_match:
-                extracted_name = name_match.group(1).replace("Facebook", "").strip(" | -")
-                if extracted_name and "Không tìm thấy" not in extracted_name:
-                    name = extracted_name
-        except:
-            pass # Vẫn giữ nguyên User UID, không báo lỗi đỏ
-
-        return name, uid, avatar
-    except Exception as e:
-        return "Lỗi Hệ Thống", "", ""
 
 # --- SIDEBAR: TRẠM TUÂN THỦ THÔNG MINH ---
 with st.sidebar:
@@ -101,46 +97,46 @@ with st.sidebar:
     
     with st.expander("🛠️ Quản lý Tài khoản FB", expanded=True):
         input_cookie = st.text_area("Dán Cookies FB:", height=70)
-        if st.button("🔍 Check & Auto-fill Profile"):
-            n, u, a = fetch_fb_profile(input_cookie)
-            st.session_state.tmp_name, st.session_state.tmp_uid, st.session_state.tmp_avatar = n, u, a
-            if u: st.success(f"Nhận diện UID: {u}")
-            else: st.error("Lỗi: Không tìm thấy ID tài khoản.")
+        if st.button("🔍 Lấy UID từ Cookie"):
+            uid_match = re.search(r'c_user=(\d+)', input_cookie)
+            if uid_match:
+                st.session_state.tmp_uid = uid_match.group(1)
+                st.success(f"Đã lấy UID: {st.session_state.tmp_uid}")
+            else: st.error("Cookie không hợp lệ hoặc không có UID.")
 
-        f_name = st.text_input("Tên FB:", st.session_state.get('tmp_name', ""))
-        f_uid = st.text_input("UID:", st.session_state.get('tmp_uid', ""))
-        f_avatar = st.text_input("Link Avatar:", st.session_state.get('tmp_avatar', ""))
+        # Nhập liệu thủ công 100% để tránh lỗi
+        f_name = st.text_input("Tên FB:", placeholder="Nhập Tên Thủ Công", value=st.session_state.get('tmp_name', ""))
+        f_uid = st.text_input("UID:", value=st.session_state.get('tmp_uid', ""))
         
-        if f_avatar: 
-            safe_display_image(f_avatar, width=80)
+        st.write("**Ảnh Avatar (Nhận diện nick):**")
+        avt_file = st.file_uploader("Tải lên Avatar", type=['jpg', 'png'], key="avt")
+        if avt_file: st.image(avt_file, width=80)
 
         st.divider()
         st.write("**Nhân vật mẫu (Cho AI):**")
-        char_url = st.text_input("Link Ảnh mẫu (Drive/Web):")
-        char_file = st.file_uploader("Hoặc tải lên (Ưu tiên):", type=['jpg', 'png'])
-        
-        if char_file: 
-            st.image(char_file, width=150)
-        elif char_url:
-            safe_display_image(char_url, width=150)
+        char_file = st.file_uploader("Tải lên Ảnh mẫu", type=['jpg', 'png'], key="char")
+        if char_file: st.image(char_file, width=150)
 
         if st.button("💾 LƯU TÀI KHOẢN"):
             if f_name and input_cookie:
+                # Mã hóa ảnh thành chuỗi để lưu thẳng vào JSON
+                b64_avt = image_to_base64(avt_file) if avt_file else ""
+                b64_char = image_to_base64(char_file) if char_file else ""
+                
                 st.session_state.accounts[f_name] = {
-                    "uid": f_uid, "avatar": f_avatar, 
-                    "character_url": char_url if char_url else "",
-                    "cookies": input_cookie
+                    "uid": f_uid, "avatar_b64": b64_avt, 
+                    "character_b64": b64_char, "cookies": input_cookie
                 }
                 save_accounts(st.session_state.accounts)
-                st.success("Đã lưu vào bộ nhớ tạm của Server!")
+                st.success("Đã lưu an toàn vào hệ thống!")
                 st.rerun()
 
     st.divider()
     if st.session_state.accounts:
         st.session_state.selected_fb = st.selectbox("🎯 Chọn Nick làm việc:", list(st.session_state.accounts.keys()))
         acc = st.session_state.accounts[st.session_state.selected_fb]
-        if acc['avatar']: 
-            safe_display_image(acc['avatar'], width=60)
+        if acc.get('avatar_b64'): 
+            st.image(acc['avatar_b64'], width=60)
     else: st.session_state.selected_fb = None
 
 # --- MAIN ---
