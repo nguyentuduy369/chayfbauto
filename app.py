@@ -155,37 +155,62 @@ with tab1:
         copy_button(st.session_state.prompt, "🖼️ Copy Prompt")
 
 with tab2:
-    st.subheader("🎨 Studio Ảnh (Pollinations - Miễn phí)")
+    st.subheader("🎨 Studio Ảnh (Smart Compliance Hub - Đa Máy Chủ)")
     cl, cr = st.columns([1, 1])
     with cl:
+        # Danh sách các máy chủ dự phòng
+        engine = st.selectbox("Lựa chọn Máy chủ (Đổi nếu bị lỗi):", [
+            "1. Stable Diffusion XL (Khuyên dùng - Ổn định nhất)",
+            "2. FLUX.1 Schnell (Sắc nét nhưng hay bận)",
+            "3. OpenJourney (Phong cách nghệ thuật)",
+            "4. Pollinations (Máy chủ phụ không cần Key)"
+        ])
+        
         p_final = st.text_area("Xác nhận Lệnh vẽ (Tiếng Anh):", st.session_state.get('prompt',''), height=150)
-        if st.button("🎨 VẼ ẢNH VỚI POLLINATIONS"):
-            with st.spinner("Trạm Tuân Thủ Thông Minh đang kết nối máy chủ Pollinations..."):
+        
+        if st.button("🎨 VẼ ẢNH NGAY"):
+            with st.spinner(f"Đang kết nối {engine.split('(')[0].strip()}..."):
                 try:
-                    import random
-                    # Tạo seed ngẫu nhiên để tránh máy chủ trả về ảnh cũ (cache)
-                    seed = random.randint(1, 1000000)
-                    
-                    # Thêm enhance=true để tối ưu chi tiết ảnh, nologo=true để xóa watermark
-                    url = f"https://image.pollinations.ai/prompt/{requests.utils.quote(p_final)}?width=1024&height=1024&nologo=true&seed={seed}&enhance=true"
-                    
-                    res = requests.get(url, timeout=30)
-                    
-                    # Kiểm tra nghiêm ngặt: Chỉ nhận nếu dữ liệu trả về thực sự là ảnh
-                    if res.status_code == 200 and 'image' in res.headers.get('content-type', ''):
-                        st.session_state.img_res = res.content
-                        st.success("Tuyệt vời! Ảnh đã được tạo thành công.")
+                    img_bytes = None
+                    if "Pollinations" in engine:
+                        import random
+                        seed = random.randint(1, 1000000)
+                        url = f"https://image.pollinations.ai/prompt/{requests.utils.quote(p_final)}?width=1024&height=1024&nologo=true&seed={seed}"
+                        res = requests.get(url, timeout=30)
+                        if res.status_code == 200 and 'image' in res.headers.get('content-type', ''):
+                            img_bytes = res.content
+                        else:
+                            st.error("Pollinations đang quá tải. Hãy chọn máy chủ số 1 hoặc 2.")
                     else:
-                        st.error("Máy chủ Pollinations đang quá tải hoặc trả về dữ liệu lỗi. Vui lòng bấm thử lại.")
+                        # Sử dụng Hugging Face Token với các Model khác nhau
+                        hf_headers = {"Authorization": f"Bearer {HF_TOKEN}"}
+                        if "Stable Diffusion" in engine:
+                            model_url = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0"
+                        elif "FLUX" in engine:
+                            model_url = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
+                        else:
+                            model_url = "https://api-inference.huggingface.co/models/prompthero/openjourney"
+
+                        res = requests.post(model_url, headers=hf_headers, json={"inputs": p_final}, timeout=40)
                         
-                except Exception as e: 
+                        if res.status_code == 200 and 'image' in res.headers.get('content-type', ''):
+                            img_bytes = res.content
+                        elif res.status_code == 503:
+                            st.error(f"Máy chủ đang khởi động (Mã 503). Vui lòng đợi 20 giây và bấm lại, hoặc chọn máy chủ khác.")
+                        else:
+                            st.error(f"Máy chủ HF đang bận (Mã lỗi: {res.status_code}). Vui lòng chọn máy chủ khác.")
+
+                    if img_bytes:
+                        st.session_state.img_res = img_bytes
+                        st.success("Tuyệt vời! Ảnh đã được tạo thành công.")
+                except Exception as e:
                     st.error(f"Lỗi kết nối hệ thống: {e}")
                 
     with cr:
         if 'img_res' in st.session_state:
             try:
                 st.image(st.session_state.img_res, use_container_width=True)
-                st.download_button("📥 Tải ảnh về", st.session_state.img_res, "pollinations_post.png", "image/png")
+                st.download_button("📥 Tải ảnh về", st.session_state.img_res, "smart_compliance_hub_post.png", "image/png")
             except Exception as e:
                 st.warning("Lỗi hiển thị dữ liệu ảnh. Vui lòng bấm vẽ lại.")
 with tab3:
