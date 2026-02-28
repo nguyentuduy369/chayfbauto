@@ -96,16 +96,21 @@ def image_to_base64(uploaded_file):
 if 'accounts' not in st.session_state: st.session_state.accounts = load_json('accounts.json')
 if 'fanpages' not in st.session_state: st.session_state.fanpages = load_json('fanpages.json')
 
-# --- SIDEBAR: TRẠM TUÂN THỦ THÔNG MINH ---
+# --- SIDEBAR: GIAO DIỆN SAAS CỘNG ĐỒNG ---
 with st.sidebar:
-    st.header("👤 Smart Compliance Hub")
+    # --- TÊN ỨNG DỤNG & ĐỊNH VỊ ---
+    st.header("⚡ OmniContent AI") # Bạn có thể đổi tên tại đây
+    st.caption("🚀 All-in-One Content & SEO Assistant (Bản Demo)")
     
-    # 1. BỘ ĐẾM NGƯỜI DÙNG (Lưu trữ bằng JSON)
+    # --- 1. BỘ ĐẾM TRUY CẬP (Bắt đầu từ 300) ---
     stats_file = 'stats.json'
-    if not os.path.exists(stats_file): save_json({"visitors": 0}, stats_file)
+    if not os.path.exists(stats_file): save_json({"visitors": 300}, stats_file)
     stats = load_json(stats_file)
     
-    # Chỉ tăng biến đếm 1 lần cho mỗi phiên truy cập
+    # Ép bộ đếm luôn lớn hơn hoặc bằng 300
+    if stats.get("visitors", 0) < 300: 
+        stats["visitors"] = 300
+        
     if 'visited' not in st.session_state:
         stats['visitors'] += 1
         save_json(stats, stats_file)
@@ -114,43 +119,55 @@ with st.sidebar:
     st.metric("👁️ Lượt truy cập hệ thống", f"{stats['visitors']:,} users")
     st.divider()
 
-    # 2. KHU VỰC DỮ LIỆU THỊ GIÁC (Dùng ngay không cần lưu trữ rườm rà)
-    st.subheader("📸 Dữ Liệu Nhân Vật")
-    st.caption("Tải ảnh để AI bóc tách đặc điểm khuôn mặt (Không bắt buộc).")
+    # --- 2. DỮ LIỆU THỊ GIÁC (Nhiều Slot Tham Chiếu) ---
+    st.subheader("📸 Dữ Liệu Tham Chiếu")
+    st.caption("Tải ảnh để AI đồng bộ khuôn mặt & bối cảnh.")
     
-    char_file = st.file_uploader("Upload Ảnh Nhân Vật:", type=['jpg', 'png'], key="char", label_visibility="collapsed")
-    if char_file: 
-        st.image(char_file, use_container_width=True)
-        # Lưu trực tiếp vào bộ nhớ tạm để Bước 1 dùng ngay
-        st.session_state.current_char_b64 = image_to_base64(char_file)
-    else:
-        st.session_state.current_char_b64 = ""
+    with st.expander("Mở rộng khu vực Tải ảnh", expanded=True):
+        st.session_state.char1_b64 = image_to_base64(st.file_uploader("Nhân vật 1 (Chính):", type=['jpg', 'png'], key="c1"))
+        st.session_state.char2_b64 = image_to_base64(st.file_uploader("Nhân vật 2 (Phụ):", type=['jpg', 'png'], key="c2"))
+        st.session_state.pet_b64 = image_to_base64(st.file_uploader("Thú cưng:", type=['jpg', 'png'], key="pet"))
+        st.session_state.bg_b64 = image_to_base64(st.file_uploader("Bối cảnh mẫu:", type=['jpg', 'png'], key="bg"))
 
     st.divider()
     
-    # 3. MỞ NHANH MẠNG XÃ HỘI (Bằng HTML/CSS Button)
-    st.subheader("🚀 Mở Nhanh Nền Tảng")
-    c_fb, c_tt = st.columns(2)
-    c_yt, c_tl = st.columns(2)
-    with c_fb: st.markdown('<a href="https://facebook.com" target="_blank"><button style="width:100%; border-radius:5px; background:#0866FF; color:white; border:none; padding:8px; font-weight:bold; cursor:pointer;">📘 Facebook</button></a>', unsafe_allow_html=True)
-    with c_tt: st.markdown('<a href="https://tiktok.com" target="_blank"><button style="width:100%; border-radius:5px; background:#000000; color:white; border:none; padding:8px; font-weight:bold; cursor:pointer;">🎵 TikTok</button></a>', unsafe_allow_html=True)
-    with c_yt: st.markdown('<a href="https://youtube.com" target="_blank"><button style="width:100%; border-radius:5px; background:#FF0000; color:white; border:none; padding:8px; font-weight:bold; cursor:pointer;">▶️ YouTube</button></a>', unsafe_allow_html=True)
-    with c_tl: st.markdown('<a href="https://web.telegram.org" target="_blank"><button style="width:100%; border-radius:5px; background:#24A1DE; color:white; border:none; padding:8px; font-weight:bold; cursor:pointer;">✈️ Telegram</button></a>', unsafe_allow_html=True)
+    # --- 3. MỞ NHANH NỀN TẢNG (Giao diện Icon lưới gọn gàng) ---
+    st.subheader("🌐 Mở Nhanh Nền Tảng")
+    
+    # Dùng CSS để tạo các nút bấm icon gọn gàng xếp thành 2 cột
+    btn_style = "display:block; width:100%; border-radius:8px; color:white; border:none; padding:8px 0; text-align:center; font-weight:bold; text-decoration:none; margin-bottom:10px; font-size:14px;"
+    
+    c_p1, c_p2 = st.columns(2)
+    with c_p1:
+        st.markdown(f'<a href="https://facebook.com" target="_blank" style="{btn_style} background:#0866FF;">📘 Facebook</a>', unsafe_allow_html=True)
+        st.markdown(f'<a href="https://youtube.com" target="_blank" style="{btn_style} background:#FF0000;">▶️ YouTube</a>', unsafe_allow_html=True)
+        st.markdown(f'<a href="https://threads.net" target="_blank" style="{btn_style} background:#000000;">🧵 Threads</a>', unsafe_allow_html=True)
+        st.markdown(f'<a href="https://zalo.me" target="_blank" style="{btn_style} background:#0068FF;">💬 Zalo Web</a>', unsafe_allow_html=True)
+    with c_p2:
+        st.markdown(f'<a href="https://tiktok.com" target="_blank" style="{btn_style} background:#000000;">🎵 TikTok</a>', unsafe_allow_html=True)
+        st.markdown(f'<a href="https://instagram.com" target="_blank" style="{btn_style} background:#E1306C;">📸 Instagram</a>', unsafe_allow_html=True)
+        st.markdown(f'<a href="https://web.telegram.org" target="_blank" style="{btn_style} background:#24A1DE;">✈️ Telegram</a>', unsafe_allow_html=True)
+        st.markdown(f'<a href="https://web.whatsapp.com" target="_blank" style="{btn_style} background:#25D366;">📞 WhatsApp</a>', unsafe_allow_html=True)
 
     st.divider()
     
-    # 4. KHUNG GÓP Ý & LIÊN HỆ TRỰC TIẾP
-    st.subheader("💬 Hỗ Trợ & Góp Ý")
-    st.info("Gặp lỗi hoặc cần tư vấn sử dụng? Trò chuyện trực tiếp với Admin:")
+    # --- 4. HỖ TRỢ & GÓP Ý ---
+    st.subheader("💬 Hỗ Trợ Kỹ Thuật")
+    st.caption("Báo lỗi hoặc cần hỗ trợ? Liên hệ trực tiếp Dev:")
     
-    c_zalo, c_tele = st.columns(2)
-    # BẠN HÃY THAY LINK ZALO VÀ TELEGRAM CỦA BẠN VÀO ĐÂY NHÉ:
-    link_zalo = "https://zalo.me/090xxxxxxx" # Đổi số điện thoại của bạn
-    link_tele = "https://t.me/username_cua_ban" # Đổi username telegram
+    c_zl, c_tl = st.columns(2)
+    with c_zl: st.markdown(f'<a href="https://zalo.me/0586999991" target="_blank" style="{btn_style} background:#0068FF;">💬 Zalo</a>', unsafe_allow_html=True)
+    with c_tl: st.markdown(f'<a href="https://t.me/ntd934924200" target="_blank" style="{btn_style} background:#24A1DE;">✈️ Telegram</a>', unsafe_allow_html=True)
     
-    with c_zalo: st.markdown(f'<a href="{link_zalo}" target="_blank"><button style="width:100%; border-radius:5px; background:#0068FF; color:white; border:none; padding:8px; font-weight:bold; cursor:pointer;">💬 Zalo</button></a>', unsafe_allow_html=True)
-    with c_tele: st.markdown(f'<a href="{link_tele}" target="_blank"><button style="width:100%; border-radius:5px; background:#24A1DE; color:white; border:none; padding:8px; font-weight:bold; cursor:pointer;">✈️ Tele</button></a>', unsafe_allow_html=True)
-
+    # --- 5. DONATE / ỦNG HỘ ---
+    st.divider()
+    st.markdown("💖 **Tiếp lửa cho dự án (Donate)**")
+    st.info("""
+    **Ngân hàng ACB**
+    STK: **555868686**
+    
+    *Mọi sự ủng hộ của bạn đều giúp duy trì máy chủ cho cộng đồng!*
+    """)
 # --- MAIN ---
 st.title("🚀 Smart Automation Hub - Nền Tảng")
 tab1, tab2, tab3 = st.tabs(["📝 Bước 1: Content", "🎨 Bước 2: Ảnh AI (Imagen 3)", "📤 Bước 3: Đăng Bài"])
