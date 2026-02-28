@@ -185,10 +185,11 @@ with tab2:
                             st.error("Pollinations đang quá tải. Hãy thử máy chủ 1 hoặc 2.")
                     else:
                         hf_headers = {"Authorization": f"Bearer {HF_TOKEN}"}
+                        # CẬP NHẬT TÊN MIỀN MỚI ROUTER.HUGGINGFACE.CO
                         if "v1.5" in engine:
-                            model_url = "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5"
+                            model_url = "https://router.huggingface.co/hf-inference/models/runwayml/stable-diffusion-v1-5"
                         else:
-                            model_url = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1"
+                            model_url = "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-2-1"
 
                         res = requests.post(model_url, headers=hf_headers, json={"inputs": p_final}, timeout=40)
                         
