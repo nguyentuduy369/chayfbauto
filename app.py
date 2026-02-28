@@ -246,84 +246,129 @@ st.title("🚀 Smart Automation Hub - Nền Tảng")
 tab1, tab2, tab3 = st.tabs(["📝 Bước 1: Content", "🎨 Bước 2: Ảnh AI (Imagen 3)", "📤 Bước 3: Đăng Bài"])
 
 with tab1:
-    st.subheader("🎯 Bảng Điều Khiển Nội Dung (Bản Thương Mại)")
+    # --- CSS ANIMATION CHO MŨI TÊN CHỈ DẪN ---
+    st.markdown("""
+        <style>
+        @keyframes slide-right {
+            0% { transform: translateX(0); opacity: 1; }
+            50% { transform: translateX(5px); opacity: 0.5; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        .arrow-anim { display: inline-block; animation: slide-right 1s ease-in-out infinite; color: #ff4b4b; font-weight: 900; margin-right: 5px; }
+        .step-title { font-size: 22px; font-weight: 800; color: #2c3e50; margin-bottom: 15px; border-bottom: 2px solid #f0f2f6; padding-bottom: 10px; }
+        .block-title { font-size: 16px; font-weight: 700; color: #6C63FF; margin-top: 15px; margin-bottom: 10px; }
+        </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="step-title"><span class="arrow-anim">>></span> BƯỚC 1: NGHIÊN CỨU & SÁNG TẠO NỘI DUNG VIRAL</div>', unsafe_allow_html=True)
     
-    # BỔ SUNG TRƯỜNG NỀN TẢNG
-    col_f0, col_f1, col_f2, col_f3 = st.columns(4)
-    with col_f0:
-        platform = st.selectbox("Nền tảng:", ["Facebook", "TikTok", "Instagram", "Threads"])
-    with col_f1:
-        role = st.selectbox("Vai trò:", ["KOL / KOC", "Sale / Bán hàng", "Chuyên gia", "Idol Livestream", "Chủ Doanh Nghiệp"])
-    with col_f2:
-        target_age = st.selectbox("Độ tuổi KH:", ["Gen Z (18-24)", "Millennials (25-34)", "Trung niên (35+)", "Mọi lứa tuổi"])
-    with col_f3:
-        target_region = st.selectbox("Văn hóa:", ["Toàn quốc", "Miền Nam", "Miền Bắc"])
+    # --- KHỐI 1: THIẾT LẬP CHIẾN DỊCH (CAMPAIGN SETUP) ---
+    st.markdown('<div class="block-title">📊 1. Cấu Hình Tệp Khách Hàng Mục Tiêu (Targeting)</div>', unsafe_allow_html=True)
+    
+    col_t1, col_t2, col_t3, col_t4, col_t5 = st.columns(5)
+    with col_t1:
+        platform = st.selectbox("Nền tảng:", ["Facebook Post", "TikTok Video", "Instagram Reels", "YouTube Shorts", "Threads", "Zalo OA"])
+    with col_t2:
+        role = st.selectbox("Vai trò của bạn:", ["Chuyên gia / Cố vấn", "KOL / KOC Review", "Chủ Doanh Nghiệp / Brand", "Sale / Affiliate", "Idol Livestream"])
+    with col_t3:
+        target_age = st.selectbox("Độ tuổi KH:", ["Gen Z (18-24)", "Millennials (25-34)", "Gen X (35-50)", "Đa thế hệ"])
+    with col_t4:
+        target_region = st.selectbox("Văn hóa Vùng:", ["Toàn quốc", "Miền Nam (Phóng khoáng)", "Miền Bắc (Chỉn chu)", "Miền Trung"])
+    with col_t5:
+        target_city = st.selectbox("Đô thị:", ["Đô thị lớn (Hà Nội, TP.HCM)", "Tỉnh lẻ / Nông thôn", "Không phân biệt"])
 
-    c1, c2 = st.columns([1, 1.2])
-    with c1:
-        if st.button("🔍 Phân tích Top Trend Hôm nay", use_container_width=True):
-            with st.spinner(f"Đang phân tích dữ liệu mạng xã hội cho {role}..."):
-                try:
-                    q_trend = f"""Bạn là Chuyên gia phân tích dữ liệu mạng xã hội hot trend hàng đầu Việt Nam.
-                    LỆNH TỐI QUAN TRỌNG: Bạn KHÔNG ĐƯỢC PHÉP dùng các từ khóa như 'Tuân Thủ', 'Pháp lý', 'Hệ thống tự động', 'B2B' trong chủ đề/trend, TRỪ KHI vai trò là 'Chủ Doanh Nghiệp'.
-                    Hãy phân tích xu hướng MỚI NHẤT hôm nay cho vai trò '{role}', nhắm đến '{target_age}', tại văn hóa '{target_region}', ĐẶC BIỆT TỐI ƯU CHO NỀN TẢNG '{platform}'.
-                    Bắt buộc trả về đúng 3 dòng định dạng sau:
-                    Sản phẩm: [Tên 1 chủ đề/sản phẩm cụ thể phù hợp trend]
-                    Đối tượng: [Chi tiết tệp {target_age} tại {target_region}]
-                    Trend: [1 Câu nói viral, nỗi đau mua sắm, hoặc phong cách sống đang hot]"""
-                    
-                    res_trend = generate_with_key_rotation([q_trend])
-                    
-                    import re
-                    sp_match = re.search(r'Sản phẩm:\s*(.*)', res_trend)
-                    dt_match = re.search(r'Đối tượng:\s*(.*)', res_trend)
-                    tr_match = re.search(r'Trend:\s*(.*)', res_trend)
-                    
-                    if sp_match and dt_match and tr_match:
-                        st.session_state.k1, st.session_state.k2, st.session_state.trend = sp_match.group(1).strip(), dt_match.group(1).strip(), tr_match.group(1).strip()
-                        st.success("Đã rà quét và nạp Trend thành công!")
-                    else: st.warning("Gemini đang bận, vui lòng bấm lại.")
-                except Exception as e: st.error(f"Lỗi lấy trend: {e}")
+    # --- KHỐI NÚT TÌM TREND (AI MARKETER) ---
+    if st.button("🔍 AI RÀ QUÉT XU HƯỚNG THỊ TRƯỜNG (TRENDING)", use_container_width=True):
+        with st.spinner(f"Giám đốc Marketing AI đang phân tích dữ liệu {platform} tại {target_region}..."):
+            try:
+                q_trend = f"""Bạn là Giám đốc Marketing (CMO) xuất sắc nhất Việt Nam.
+                Hãy phân tích xu hướng MỚI NHẤT hôm nay cho chiến dịch trên '{platform}', với tư cách là '{role}'.
+                Tệp khách hàng mục tiêu: '{target_age}', sống tại '{target_city}', văn hóa '{target_region}'.
+                Hãy tìm ra 1 góc nhìn (Angle) hoặc nỗi đau (Pain-point) đang cực kỳ viral phù hợp với tệp này.
+                Bắt buộc trả về đúng 3 dòng định dạng sau (Tuyệt đối không giải thích thêm):
+                Sản phẩm: [Ngách hoặc sản phẩm cụ thể đang hot, VD: Thời trang công sở, Skincare thuần chay...]
+                Chân dung: [Phân tích tâm lý/nhu cầu của tệp {target_age} tại {target_region}]
+                Angle: [Góc nhìn tiếp cận hoặc Câu nói viral, trend giật gân, nỗi đau thầm kín]"""
+                
+                res_trend = generate_with_key_rotation([q_trend])
+                import re
+                sp_match = re.search(r'Sản phẩm:\s*(.*)', res_trend)
+                dt_match = re.search(r'Chân dung:\s*(.*)', res_trend)
+                tr_match = re.search(r'Angle:\s*(.*)', res_trend)
+                
+                if sp_match and dt_match and tr_match:
+                    st.session_state.k1, st.session_state.k2, st.session_state.trend = sp_match.group(1).strip(), dt_match.group(1).strip(), tr_match.group(1).strip()
+                    st.success("✅ Đã bắt mạch thị trường thành công! Dữ liệu đã được điền vào các ô bên dưới.")
+                else: st.warning("Mạng lưới đang nghẽn, vui lòng thử lại.")
+            except Exception as e: st.error(f"Lỗi phân tích: {e}")
 
-        st.divider()
-        sp = st.text_input("Chủ đề / Sản phẩm", st.session_state.get('k1', "Review phong cách sống"))
-        kh = st.text_input("Đối tượng", st.session_state.get('k2', "Giới trẻ Gen Z"))
-        tr = st.text_input("Bối cảnh / Trend", st.session_state.get('trend', "Cuộc sống tự do"))
-        
-        if st.button("✨ TẠO NỘI DUNG VIRAL", use_container_width=True):
-            with st.spinner("Đang xử lý dữ liệu và viết bài..."):
-                try:
-                    # Truyền Nền Tảng vào Master Prompt để chỉnh giọng văn
-                    q_text = f"Write a viral {platform} post for '{sp}' targeting '{kh}' with a '{tr}' vibe, from the perspective of a '{role}'. Ensure the tone matches {platform} culture. Under 150 words. Format: [CONTENT] Vietnamese post here ||| [PROMPT] English image prompt here."
-                    prompt_data = [q_text]
-                    
-                    has_image = False
-                    # Đọc trực tiếp từ session_state được gán ở Sidebar, không cần lôi từ JSON
-                    if st.session_state.get('current_char_b64'):
-                        try:
-                            img_data = base64.b64decode(st.session_state.current_char_b64.split(',')[1])
-                            char_img = Image.open(io.BytesIO(img_data))
-                            prompt_data.append(char_img)
-                            prompt_data[0] += f"\nIMPORTANT VISUAL RULE: I attached a reference image. The [PROMPT] MUST include: 1) EXACT facial extraction (face shape, features, ethnicity) from the image. 2) Place this EXACT character in a realistic environmental setting relevant to '{sp}' and '{tr}'. 3) STRICT composition: medium environmental portrait shot, 9:16 ratio. STRICTLY NO background blur. 4) Append: 'photojournalism style, wide angle lens (20mm), deep depth of field, sharp background, highly detailed textures, photorealistic, 8k, natural daylight'."
-                            has_image = True
-                        except: pass
-                    
-                    if not has_image:
-                        prompt_data[0] += f"\nIMPORTANT VISUAL RULE: Create a highly detailed English image generation prompt describing a realistic scene related to '{sp}' and '{tr}'. The [PROMPT] MUST include: 1) A realistic human character relevant to the topic. 2) STRICT composition: medium environmental portrait shot, 9:16 ratio. STRICTLY NO background blur (Deep Depth of Field). The background MUST tell a story. 3) Append keywords: 'photojournalism style, wide angle lens (20mm), deep depth of field, sharp background, environmental portrait, highly detailed textures, photorealistic, 8k, natural daylight'."
+    # --- KHỐI 2: TINH CHỈNH ĐIỂM CHẠM (TOUCHPOINTS) ---
+    st.markdown('<div class="block-title">🎯 2. Tinh Chỉnh Thông Điệp Cốt Lõi (Core Message)</div>', unsafe_allow_html=True)
+    c_in1, c_in2, c_in3 = st.columns(3)
+    with c_in1: sp = st.text_input("Ngách / Sản phẩm (Product)", st.session_state.get('k1', "Phong cách sống tối giản"))
+    with c_in2: kh = st.text_input("Chân dung Tâm lý (Persona)", st.session_state.get('k2', "Gen Z thích tự do tài chính"))
+    with c_in3: tr = st.text_input("Góc nhìn / Nỗi đau (Angle)", st.session_state.get('trend', "Áp lực đồng trang lứa (Peer pressure)"))
+    
+    # --- KHỐI 3: NÚT KÍCH HOẠT SẢN XUẤT ---
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("⏩ XUẤT BẢN NỘI DUNG & LỆNH ĐẠO DIỄN ẢNH", type="primary", use_container_width=True):
+        with st.spinner("AI Copywriter & AI Art Director đang làm việc..."):
+            try:
+                q_text = f"Write a highly engaging and viral post for {platform} about '{sp}'. The target audience is '{kh}' located in '{target_city}'. Approach this from the angle of '{tr}'. Tone of voice: {role}. Keep it under 200 words, highly conversational, and format it for high conversion. Format: [CONTENT] Vietnamese text here ||| [PROMPT] English image prompt here."
+                prompt_data = [q_text]
+                
+                # --- XỬ LÝ ĐA ẢNH TỪ SIDEBAR ---
+                img_instructions = []
+                # Đọc ảnh 1 (Nhân vật chính)
+                if st.session_state.get('char1_b64'):
+                    try:
+                        prompt_data.append(Image.open(io.BytesIO(base64.b64decode(st.session_state.char1_b64.split(',')[1]))))
+                        img_instructions.append("Image 1 is the MAIN CHARACTER. Extract their exact facial features, ethnicity, and hairstyle.")
+                    except: pass
+                # Đọc ảnh 2 (Nhân vật phụ)
+                if st.session_state.get('char2_b64'):
+                    try:
+                        prompt_data.append(Image.open(io.BytesIO(base64.b64decode(st.session_state.char2_b64.split(',')[1]))))
+                        img_instructions.append("Image 2 is the SECONDARY CHARACTER. Extract their exact facial features. Place them interacting with the Main Character.")
+                    except: pass
+                # Đọc ảnh Thú cưng
+                if st.session_state.get('pet_b64'):
+                    try:
+                        prompt_data.append(Image.open(io.BytesIO(base64.b64decode(st.session_state.pet_b64.split(',')[1]))))
+                        img_instructions.append("Image 3 is a PET. Include this exact animal species and fur pattern in the scene.")
+                    except: pass
+                # Đọc ảnh Bối cảnh
+                if st.session_state.get('bg_b64'):
+                    try:
+                        prompt_data.append(Image.open(io.BytesIO(base64.b64decode(st.session_state.bg_b64.split(',')[1]))))
+                        img_instructions.append("Image 4 is the REFERENCE BACKGROUND. The environment MUST perfectly match the architectural style, lighting, and mood of this image.")
+                    except: pass
 
-                    res = generate_with_key_rotation(prompt_data)
-                    
-                    if "|||" in res:
-                        st.session_state.content, st.session_state.prompt = res.split("|||")[0].replace("[CONTENT]", "").strip(), res.split("|||")[1].replace("[PROMPT]", "").strip()
-                    else: 
-                        st.session_state.content, st.session_state.prompt = res, f"A photojournalistic environmental shot about {sp}, sharp background focus, 9:16 ratio"
-                except Exception as e: st.error(f"Lỗi: {e}")
+                # Xây dựng luật Hình ảnh (Visual Rule)
+                if img_instructions:
+                    prompt_data[0] += f"\n\nIMPORTANT VISUAL RULE: I attached reference images. {' '.join(img_instructions)} The [PROMPT] MUST be a cohesive English paragraph placing these specific elements into a realistic scene related to '{sp}' and '{tr}'. STRICT composition: medium environmental shot, 9:16 ratio. STRICTLY NO background blur (Deep Depth of Field). Append: 'photojournalism style, wide angle lens (20mm), highly detailed textures, photorealistic, 8k, natural daylight'."
+                else:
+                    prompt_data[0] += f"\n\nIMPORTANT VISUAL RULE: Create a highly detailed English image generation prompt describing a realistic scene related to '{sp}' and '{tr}'. STRICT composition: medium environmental shot, 9:16 ratio. STRICTLY NO background blur. Append keywords: 'photojournalism style, wide angle lens (20mm), highly detailed textures, photorealistic, 8k, natural daylight'."
 
-    with c2:
-        st.session_state.content = st.text_area(f"Bài viết (Chuẩn {platform}):", st.session_state.get('content',''), height=220)
-        copy_button(st.session_state.content, "📋 Copy Content")
-        st.session_state.prompt = st.text_area("Prompt Đạo diễn Hình ảnh (EN):", st.session_state.get('prompt',''), height=150)
+                res = generate_with_key_rotation(prompt_data)
+                
+                if "|||" in res:
+                    st.session_state.content, st.session_state.prompt = res.split("|||")[0].replace("[CONTENT]", "").strip(), res.split("|||")[1].replace("[PROMPT]", "").strip()
+                else: 
+                    st.session_state.content, st.session_state.prompt = res, f"A photojournalistic environmental shot about {sp}, sharp background focus, 9:16 ratio"
+            except Exception as e: st.error(f"Lỗi: {e}")
+
+    # --- KHỐI 4: GIAO DIỆN HIỂN THỊ KẾT QUẢ ---
+    st.markdown('<div class="block-title">📝 3. Tài Sản Chuyển Đổi (Assets)</div>', unsafe_allow_html=True)
+    c_out1, c_out2 = st.columns([1, 1.2])
+    with c_out1:
+        st.info("💡 Lệnh Đạo diễn (Prompt) đã được AI tối ưu hóa tỷ lệ 9:16, độ nét 8K và cấu trúc không xóa phông. Bạn có thể chỉnh sửa thêm tiếng Anh tại đây trước khi chuyển sang Bước 2.")
+        st.session_state.prompt = st.text_area("Đạo diễn Hình ảnh / AI Prompt (EN):", st.session_state.get('prompt',''), height=200)
         copy_button(st.session_state.prompt, "🖼️ Copy Prompt")
+    with c_out2:
+        st.success(f"📌 Bài viết đã được tối ưu chuẩn văn phong của {st.session_state.get('platform_selected', 'nền tảng')}.")
+        st.session_state.content = st.text_area("Bản thảo Content (VN):", st.session_state.get('content',''), height=200)
+        copy_button(st.session_state.content, "📋 Copy Content")
 
 with tab2:
     st.subheader("🎨 Studio Ảnh (FLUX.1 Schnell)")
