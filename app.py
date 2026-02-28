@@ -143,21 +143,16 @@ with st.sidebar:
         if acc.get('avatar_b64'): 
             st.image(acc['avatar_b64'], width=60)
             
-      # TÍNH NĂNG MỚI: LOGIN NHANH QUA JAVASCRIPT
-        st.write("🔑 **Hỗ trợ Login Siêu Tốc (Chống Checkpoint)**")
-        st.caption("Dùng để đăng bài thủ công (Phương án 1) an toàn 100%.")
-        
-        # Dọn dẹp cookie rác (xuống dòng, khoảng trắng thừa, nháy kép) để tránh gãy code JS
+     # TÍNH NĂNG MỚI: LOGIN NHANH QUA JAVASCRIPT (ĐÃ TỐI ƯU GIAO DIỆN)
+        st.divider()
         clean_cookie = acc.get('cookies', '').replace('\n', '').replace('\r', '').replace('`', '').replace('"', "'").strip()
-        
-        js_code = f"""let c = "{clean_cookie}";
-c.split(';').forEach(i => {{
-    if(i.trim()) document.cookie = i.trim() + "; domain=.facebook.com; path=/";
-}});
-window.location.href="https://www.facebook.com";"""
+        js_code = f"""let c = "{clean_cookie}";\nc.split(';').forEach(i => {{ if(i.trim()) document.cookie = i.trim() + "; domain=.facebook.com; path=/"; }});\nwindow.location.href="https://www.facebook.com";"""
 
-        st.code(js_code, language="javascript")
-        st.info("👉 **LƯU Ý:** Bạn BẮT BUỘC phải mở **Tab Ẩn Danh (Incognito)** vào facebook.com ➔ Bấm **F12** ➔ Chọn **Console** ➔ Dán mã trên và ấn **Enter**.")
+        with st.expander("🔑 Lấy Mã Login Siêu Tốc (Chống Checkpoint)", expanded=False):
+            st.caption("Copy mã dưới đây để đăng nhập tự động, phục vụ Bước 3 (Phương án 1).")
+            st.code(js_code, language="javascript")
+            st.info("👉 **HDSD:** Mở Tab Ẩn Danh (Incognito) vào facebook.com ➔ Bấm **F12** ➔ Chọn **Console** ➔ Dán mã trên ➔ Enter.")
+            
     else: 
         st.session_state.selected_fb = None
         st.warning("Chưa có Nick FB. Vui lòng thêm ở trên.")
