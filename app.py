@@ -55,22 +55,23 @@ except:
     st.error("❌ Thiếu GEMINI_KEYS hoặc HF_TOKEN trong thiết lập Secrets!")
     st.stop()
 
-# --- HÀM XOAY VÒNG API KEY GEMINI ---
-def generate_with_key_rotation(prompt_text):
+import io
+from PIL import Image
+
+# --- HÀM XOAY VÒNG API KEY GEMINI (NÂNG CẤP THỊ GIÁC) ---
+def generate_with_key_rotation(prompt_data):
     for i, key in enumerate(GEMINI_KEYS):
         try:
             genai.configure(api_key=key.strip())
             model = genai.GenerativeModel('gemini-2.5-flash')
-            return model.generate_content(prompt_text).text
+            # Khả năng nạp cả mảng dữ liệu (chữ + ảnh) vào Gemini
+            return model.generate_content(prompt_data).text
         except Exception as e:
             err_str = str(e).lower()
             if "429" in err_str or "quota" in err_str or "exhausted" in err_str:
-                if i < len(GEMINI_KEYS) - 1:
-                    continue # Bị giới hạn -> Chuyển sang Key tiếp theo
-                else:
-                    raise Exception("Tất cả API Keys đều đã hết hạn mức. Vui lòng thêm Key mới!")
-            else:
-                raise e # Lỗi khác thì báo đỏ luôn
+                if i < len(GEMINI_KEYS) - 1: continue
+                else: raise Exception("Tất cả API Keys đều đã hết hạn mức. Vui lòng thêm Key mới!")
+            else: raise e
 
 # --- QUẢN LÝ DỮ LIỆU & MÃ HÓA ẢNH ---
 def save_accounts(accounts):
@@ -150,14 +151,10 @@ with tab1:
         if st.button("🔍 Phân tích Top Trend Hôm nay (Bởi Gemini)"):
             with st.spinner("Đang quét dữ liệu mạng xã hội hôm nay..."):
                 try:
-                    prompt_trend = """Hôm nay là ngày hiện tại. Bạn là Giám đốc Sáng tạo. Phân tích xu hướng MXH hôm nay và đưa ra ý tưởng viết bài viral cho 'Trạm Tuân Thủ Thông Minh'. Bắt buộc trả về đúng 3 dòng:
-                    Sản phẩm: [1 Dịch vụ phù hợp]
-                    Đối tượng: [1 Tệp khách hàng]
-                    Trend: [1 Xu hướng/sự kiện hôm nay]"""
-                    
-                    # Sử dụng hàm xoay vòng Key
+                    prompt_trend = ["Hôm nay là ngày hiện tại. Phân tích xu hướng MXH hôm nay và đưa ra ý tưởng viết bài viral cho 'Trạm Tuân Thủ Thông Minh'. Bắt buộc trả về đúng 3 dòng:\nSản phẩm: [1 Dịch vụ phù hợp]\nĐối tượng: [1 Tệp khách hàng]\nTrend: [1 Xu hướng/sự kiện hôm nay]"]
                     res_trend = generate_with_key_rotation(prompt_trend)
                     
+                    import re
                     sp_match = re.search(r'Sản phẩm:\s*(.*)', res_trend)
                     dt_match = re.search(r'Đối tượng:\s*(.*)', res_trend)
                     tr_match = re.search(r'Trend:\s*(.*)', res_trend)
@@ -173,11 +170,23 @@ with tab1:
         tr = st.text_input("Trend / Bối cảnh", st.session_state.get('trend', "Tối ưu vận hành"))
         
         if st.button("✨ TẠO NỘI DUNG VIRAL"):
-            with st.spinner("Đang chọn API Key phù hợp & viết bài..."):
+            with st.spinner("Đang phân tích Ảnh Mẫu và Viết bài..."):
                 try:
-                    q = f"""Write a viral Facebook personal profile post for {sp} targeting {kh} with a {tr} vibe.
-                    CRITICAL RULES: Under 150 words, conversational, hook, open question. Format: [CONTENT] Vietnamese post here ||| [PROMPT] English image prompt here."""
-                    res = generate_with_key_rotation(q)
+                    q_text = f"Write a viral Facebook personal post for {sp} targeting {kh} with a {tr} vibe. Under 150 words. Format: [CONTENT] Vietnamese post here ||| [PROMPT] English image prompt here."
+                    prompt_data = [q_text]
+                    
+                    # Gemini lấy ảnh từ Sidebar để phân tích khuôn mặt nhân vật
+                    if st.session_state.get('selected_fb'):
+                        acc = st.session_state.accounts[st.session_state.selected_fb]
+                        if acc.get('character_b64'):
+                            try:
+                                img_data = base64.b64decode(acc['character_b64'].split(',')[1])
+                                char_img = Image.open(io.BytesIO(img_data))
+                                prompt_data.append(char_img)
+                                prompt_data[0] += "\nIMPORTANT: I attached a reference image of the character. Analyze their appearance deeply and write a highly detailed physical description in the [PROMPT] section so the image AI can replicate them perfectly."
+                            except: pass
+                    
+                    res = generate_with_key_rotation(prompt_data)
                     
                     if "|||" in res:
                         st.session_state.content, st.session_state.prompt = res.split("|||")[0].replace("[CONTENT]", "").strip(), res.split("|||")[1].replace("[PROMPT]", "").strip()
@@ -188,122 +197,71 @@ with tab1:
     with c2:
         st.session_state.content = st.text_area("Bài viết:", st.session_state.get('content',''), height=220)
         copy_button(st.session_state.content, "📋 Copy Content")
-        st.session_state.prompt = st.text_area("Prompt vẽ ảnh:", st.session_state.get('prompt',''), height=100)
+        st.session_state.prompt = st.text_area("Prompt vẽ ảnh:", st.session_state.get('prompt',''), height=150)
         copy_button(st.session_state.prompt, "🖼️ Copy Prompt")
 
 with tab2:
-    st.subheader("🎨 Studio Ảnh (2 Server Độc Lập)")
+    st.subheader("🎨 Studio Ảnh (FLUX.1 Schnell)")
     cl, cr = st.columns([1, 1])
     with cl:
-        engine = st.selectbox("Lựa chọn Máy chủ:", [
-            "1. FLUX.1 Schnell (HuggingFace - Cực Nét)",
-            "2. Pollinations (Đã vượt rào Cloudflare - Ổn định)"
-        ])
         p_final = st.text_area("Xác nhận Lệnh vẽ:", st.session_state.get('prompt',''), height=150)
         
         if st.button("🎨 VẼ ẢNH NGAY"):
-            with st.spinner(f"Đang kết nối {engine.split('(')[0].strip()}..."):
+            with st.spinner("Đang kết nối FLUX.1..."):
                 try:
-                    if "Pollinations" in engine:
-                        import urllib.parse, random
-                        seed = random.randint(1, 100000)
-                        safe_prompt = urllib.parse.quote(p_final.replace('\n', ' '))
-                        url = f"https://image.pollinations.ai/prompt/{safe_prompt}?nologo=true&seed={seed}&width=1024&height=1024"
-                        
-                        # Thêm User-Agent giả lập trình duyệt thực để vượt Cloudflare 530
-                        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-                        res = requests.get(url, headers=headers, timeout=30)
-                        
-                        if res.status_code == 200:
-                            st.session_state.img_res = res.content
-                            st.success("Tạo ảnh bằng Pollinations thành công!")
-                        else: st.error(f"Pollinations lỗi: {res.status_code}")
-                    else:
-                        hf_headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-                        res = requests.post("https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell", headers=hf_headers, json={"inputs": p_final}, timeout=40)
-                        if res.status_code == 200:
-                            st.session_state.img_res = res.content
-                            st.success("Tạo ảnh bằng FLUX.1 thành công!")
-                        elif res.status_code == 503: st.error("Máy chủ HF đang khởi động. Vui lòng đợi 20s.")
-                        else: st.error(f"HF lỗi {res.status_code}")
+                    hf_headers = {"Authorization": f"Bearer {HF_TOKEN}"}
+                    model_url = "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell"
+                    res = requests.post(model_url, headers=hf_headers, json={"inputs": p_final}, timeout=40)
+                    if res.status_code == 200:
+                        st.session_state.img_res = res.content
+                        st.success("Tạo ảnh thành công!")
+                    else: 
+                        st.error(f"HF lỗi {res.status_code}")
                 except Exception as e: st.error(f"Lỗi: {e}")
                 
     with cr:
         if 'img_res' in st.session_state:
             st.image(st.session_state.img_res, use_container_width=True)
+
 with tab3:
-    st.header("📤 Trạm Đăng Bài Tự Động")
-    if st.session_state.get('selected_fb'):
-        acc = st.session_state.accounts[st.session_state.selected_fb]
-        
-        col_l, col_r = st.columns([1, 1.5])
-        with col_l:
-            st.success(f"Đã nạp Nick: **{st.session_state.selected_fb}**")
-            st.info("Robot sử dụng mbasic.facebook.com để đăng bài an toàn, chống Checkpoint.")
-            
-            if st.button("🚀 KÍCH HOẠT ROBOT ĐĂNG BÀI"):
-                if not st.session_state.get('content') or not st.session_state.get('img_res'):
-                    st.error("❌ Vui lòng tạo Bài viết (Bước 1) và Hình ảnh (Bước 2) trước khi đăng!")
-                else:
-                    with st.status("🤖 Robot đang thực thi...", expanded=True) as status:
-                        try:
-                            st.write("1. Đang kiểm tra và tải lõi Trình duyệt (Chỉ chạy lần đầu tiên)...")
-                            import os
-                            # Lệnh ép Streamlit Cloud tải trình duyệt Chromium
-                            os.system("playwright install chromium")
-                            
-                            st.write("2. Đang khởi tạo môi trường giả lập...")
-                            from playwright.sync_api import sync_playwright
-                            import tempfile
-                            
-                            def parse_cookies(cookie_string):
-                                cookies = []
-                                for item in cookie_string.split(';'):
-                                    if '=' in item:
-                                        name, value = item.strip().split('=', 1)
-                                        cookies.append({'name': name, 'value': value, 'domain': '.facebook.com', 'path': '/'})
-                                return cookies
+    st.header("📤 Trạm Đăng Bài (Meta Graph API - Tuân Thủ 100%)")
+    st.info("💡 Ngã rẽ 1: Đăng tự động lên Fanpage bằng API chính thức. Không cần giả lập trình duyệt, không rủi ro Checkpoint.")
+    
+    # Cấu hình API Fanpage
+    col_cfg1, col_cfg2 = st.columns(2)
+    with col_cfg1:
+        page_id = st.text_input("Nhập Page ID (Của Fanpage):", placeholder="VD: 123456789012345")
+    with col_cfg2:
+        page_token = st.text_input("Nhập Page Access Token:", type="password", placeholder="EAAI...")
 
-                            with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
-                                tmp.write(st.session_state.img_res)
-                                img_path = tmp.name
-
-                            st.write("3. Đang mở trình duyệt và bơm Cookies...")
-                            with sync_playwright() as p:
-                                browser = p.chromium.launch(headless=True)
-                                context = browser.new_context()
-                                context.add_cookies(parse_cookies(acc['cookies']))
-                                page = context.new_page()
-
-                                st.write("4. Đang truy cập Facebook mbasic...")
-                                page.goto("https://mbasic.facebook.com/")
-                                
-                                st.write("5. Đang tải hình ảnh lên...")
-                                page.click("input[name='view_photo']")
-                                page.set_input_files("input[type='file']", img_path)
-                                page.click("input[name='add_photo_done']")
-                                
-                                st.write("6. Đang nhập nội dung bài viết...")
-                                page.fill("textarea[name='xc_message']", st.session_state.content)
-                                
-                                st.write("7. Đang bấm Đăng bài...")
-                                page.click("input[name='view_post']")
-                                
-                                browser.close()
-                                
-                            status.update(label="✅ ĐĂNG BÀI THÀNH CÔNG LÊN FACEBOOK!", state="complete")
-                            st.balloons()
-                            
-                        except Exception as e:
-                            status.update(label="❌ Lỗi trong quá trình Robot chạy", state="error")
-                            st.error(f"Chi tiết lỗi: {e}")
-                            
-        with col_r:
-            st.markdown("**Bản xem trước Nội dung:**")
-            st.info(st.session_state.get('content', 'Chưa có bài viết...'))
-            if st.session_state.get('img_res'):
-                st.image(st.session_state.img_res, width=250)
+    col_l, col_r = st.columns([1, 1.5])
+    with col_l:
+        if st.button("🚀 BẮN DỮ LIỆU LÊN FANPAGE"):
+            if not st.session_state.get('content') or not st.session_state.get('img_res'):
+                st.error("❌ Vui lòng tạo Bài viết và Hình ảnh trước!")
+            elif not page_id or not page_token:
+                st.error("❌ Vui lòng nhập Page ID và Token của Fanpage!")
             else:
-                st.warning("Chưa có hình ảnh...")
-    else: 
-        st.error("Vui lòng chọn hoặc nạp tài khoản Facebook ở Sidebar trước!")
+                with st.spinner("Đang truyền dữ liệu qua máy chủ Meta..."):
+                    try:
+                        url = f"https://graph.facebook.com/v19.0/{page_id}/photos"
+                        payload = {'message': st.session_state.content, 'access_token': page_token}
+                        files = {'source': ('image.png', st.session_state.img_res, 'image/png')}
+                        
+                        res = requests.post(url, data=payload, files=files)
+                        data = res.json()
+                        
+                        if 'id' in data:
+                            st.success(f"✅ BÙM! Đã đăng thành công lên Fanpage. Post ID: {data['id']}")
+                            st.balloons()
+                        else:
+                            err_msg = data.get('error', {}).get('message', 'Lỗi không xác định')
+                            st.error(f"❌ Meta từ chối: {err_msg}")
+                    except Exception as e:
+                        st.error(f"Lỗi hệ thống: {e}")
+                        
+    with col_r:
+        st.markdown("**Bản xem trước Nội dung:**")
+        st.info(st.session_state.get('content', 'Chưa có bài viết...'))
+        if st.session_state.get('img_res'):
+            st.image(st.session_state.img_res, width=250)
