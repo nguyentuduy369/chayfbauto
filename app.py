@@ -158,13 +158,16 @@ tab1, tab2, tab3 = st.tabs(["📝 Bước 1: Content", "🎨 Bước 2: Ảnh AI
 with tab1:
     st.subheader("🎯 Bảng Điều Khiển Nội Dung (Bản Thương Mại)")
     
-    col_f1, col_f2, col_f3 = st.columns(3)
+    # BỔ SUNG TRƯỜNG NỀN TẢNG
+    col_f0, col_f1, col_f2, col_f3 = st.columns(4)
+    with col_f0:
+        platform = st.selectbox("Nền tảng:", ["Facebook", "TikTok", "Instagram", "Threads"])
     with col_f1:
-        role = st.selectbox("Vai trò:", ["KOL / KOC Review", "Sale / Bán hàng", "Chuyên gia / Đào tạo", "Idol Livestream", "Chủ Doanh Nghiệp"])
+        role = st.selectbox("Vai trò:", ["KOL / KOC", "Sale / Bán hàng", "Chuyên gia", "Idol Livestream", "Chủ Doanh Nghiệp"])
     with col_f2:
-        target_age = st.selectbox("Độ tuổi Khách hàng:", ["Gen Z (18-24 tuổi)", "Millennials (25-34 tuổi)", "Trung niên (35-50 tuổi)", "Mọi lứa tuổi"])
+        target_age = st.selectbox("Độ tuổi KH:", ["Gen Z (18-24)", "Millennials (25-34)", "Trung niên (35+)", "Mọi lứa tuổi"])
     with col_f3:
-        target_region = st.selectbox("Khu vực / Văn hóa:", ["Toàn quốc (Phổ thông)", "Miền Nam (Sôi nổi, trend)", "Miền Bắc (Chỉn chu, sâu sắc)"])
+        target_region = st.selectbox("Văn hóa:", ["Toàn quốc", "Miền Nam", "Miền Bắc"])
 
     c1, c2 = st.columns([1, 1.2])
     with c1:
@@ -172,11 +175,9 @@ with tab1:
             with st.spinner(f"Đang phân tích dữ liệu mạng xã hội cho {role}..."):
                 try:
                     q_trend = f"""Bạn là Chuyên gia phân tích dữ liệu mạng xã hội hot trend hàng đầu Việt Nam.
-                    LỆNH TỐI QUAN TRỌNG: Bạn KHÔNG ĐƯỢC PHÉP dùng các từ khóa như 'Tuân Thủ', 'Pháp lý', 'Hệ thống tự động', 'Hỗ trợ tự động', 'B2B', 'Quản lý doanh nghiệp' trong chủ đề hoặc trend, TRỪ KHI vai trò người dùng chọn dưới đây là 'Chủ Doanh Nghiệp'.
-                    Hãy phân tích xu hướng MỚI NHẤT hôm nay cho vai trò '{role}', nhắm đến '{target_age}', tại văn hóa '{target_region}'.
-                    - Nếu là Idol/KOL/Sale: Bắt buộc chọn các chủ đề B2C hot (Mỹ phẩm, Thời trang, Ẩm thực, Đồ công nghệ...).
-                    - Trend phải là các câu nói viral, lóng giới trẻ (slang), drama hot, sự kiện mua sắm, hoặc nỗi đau (pain point) đang được quan tâm nhất hôm nay.
-                    Bắt buộc trả về đúng 3 dòng định dạng sau (Tuyệt đối không giải thích thêm):
+                    LỆNH TỐI QUAN TRỌNG: Bạn KHÔNG ĐƯỢC PHÉP dùng các từ khóa như 'Tuân Thủ', 'Pháp lý', 'Hệ thống tự động', 'B2B' trong chủ đề/trend, TRỪ KHI vai trò là 'Chủ Doanh Nghiệp'.
+                    Hãy phân tích xu hướng MỚI NHẤT hôm nay cho vai trò '{role}', nhắm đến '{target_age}', tại văn hóa '{target_region}', ĐẶC BIỆT TỐI ƯU CHO NỀN TẢNG '{platform}'.
+                    Bắt buộc trả về đúng 3 dòng định dạng sau:
                     Sản phẩm: [Tên 1 chủ đề/sản phẩm cụ thể phù hợp trend]
                     Đối tượng: [Chi tiết tệp {target_age} tại {target_region}]
                     Trend: [1 Câu nói viral, nỗi đau mua sắm, hoặc phong cách sống đang hot]"""
@@ -202,20 +203,20 @@ with tab1:
         if st.button("✨ TẠO NỘI DUNG VIRAL", use_container_width=True):
             with st.spinner("Đang xử lý dữ liệu và viết bài..."):
                 try:
-                    q_text = f"Write a viral Facebook personal post for '{sp}' targeting '{kh}' with a '{tr}' vibe, from the perspective of a '{role}'. Under 150 words. Format: [CONTENT] Vietnamese post here ||| [PROMPT] English image prompt here."
+                    # Truyền Nền Tảng vào Master Prompt để chỉnh giọng văn
+                    q_text = f"Write a viral {platform} post for '{sp}' targeting '{kh}' with a '{tr}' vibe, from the perspective of a '{role}'. Ensure the tone matches {platform} culture. Under 150 words. Format: [CONTENT] Vietnamese post here ||| [PROMPT] English image prompt here."
                     prompt_data = [q_text]
                     
                     has_image = False
-                    if st.session_state.get('selected_fb'):
-                        acc = st.session_state.accounts[st.session_state.selected_fb]
-                        if acc.get('character_b64'):
-                            try:
-                                img_data = base64.b64decode(acc['character_b64'].split(',')[1])
-                                char_img = Image.open(io.BytesIO(img_data))
-                                prompt_data.append(char_img)
-                                prompt_data[0] += f"\nIMPORTANT VISUAL RULE: I attached a reference image. The [PROMPT] MUST include: 1) EXACT facial extraction (face shape, features, ethnicity) from the image. 2) Place this EXACT character in a realistic environmental setting relevant to '{sp}' and '{tr}'. 3) STRICT composition: medium environmental portrait shot, 9:16 ratio. STRICTLY NO background blur. 4) Append: 'photojournalism style, wide angle lens (20mm), deep depth of field, sharp background, highly detailed textures, photorealistic, 8k, natural daylight'."
-                                has_image = True
-                            except: pass
+                    # Đọc trực tiếp từ session_state được gán ở Sidebar, không cần lôi từ JSON
+                    if st.session_state.get('current_char_b64'):
+                        try:
+                            img_data = base64.b64decode(st.session_state.current_char_b64.split(',')[1])
+                            char_img = Image.open(io.BytesIO(img_data))
+                            prompt_data.append(char_img)
+                            prompt_data[0] += f"\nIMPORTANT VISUAL RULE: I attached a reference image. The [PROMPT] MUST include: 1) EXACT facial extraction (face shape, features, ethnicity) from the image. 2) Place this EXACT character in a realistic environmental setting relevant to '{sp}' and '{tr}'. 3) STRICT composition: medium environmental portrait shot, 9:16 ratio. STRICTLY NO background blur. 4) Append: 'photojournalism style, wide angle lens (20mm), deep depth of field, sharp background, highly detailed textures, photorealistic, 8k, natural daylight'."
+                            has_image = True
+                        except: pass
                     
                     if not has_image:
                         prompt_data[0] += f"\nIMPORTANT VISUAL RULE: Create a highly detailed English image generation prompt describing a realistic scene related to '{sp}' and '{tr}'. The [PROMPT] MUST include: 1) A realistic human character relevant to the topic. 2) STRICT composition: medium environmental portrait shot, 9:16 ratio. STRICTLY NO background blur (Deep Depth of Field). The background MUST tell a story. 3) Append keywords: 'photojournalism style, wide angle lens (20mm), deep depth of field, sharp background, environmental portrait, highly detailed textures, photorealistic, 8k, natural daylight'."
@@ -229,7 +230,7 @@ with tab1:
                 except Exception as e: st.error(f"Lỗi: {e}")
 
     with c2:
-        st.session_state.content = st.text_area("Bài viết (Chuẩn cá nhân):", st.session_state.get('content',''), height=220)
+        st.session_state.content = st.text_area(f"Bài viết (Chuẩn {platform}):", st.session_state.get('content',''), height=220)
         copy_button(st.session_state.content, "📋 Copy Content")
         st.session_state.prompt = st.text_area("Prompt Đạo diễn Hình ảnh (EN):", st.session_state.get('prompt',''), height=150)
         copy_button(st.session_state.prompt, "🖼️ Copy Prompt")
