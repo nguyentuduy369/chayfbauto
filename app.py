@@ -147,7 +147,6 @@ tab1, tab2, tab3 = st.tabs(["📝 Bước 1: Content", "🎨 Bước 2: Ảnh AI
 with tab1:
     st.subheader("🎯 Bảng Điều Khiển Nội Dung (Đa Ngành Nghề)")
     
-    # 1. BỘ LỌC TÙY CHỈNH CHO NGƯỜI DÙNG (KOL, KOC, SALE...)
     col_f1, col_f2, col_f3 = st.columns(3)
     with col_f1:
         role = st.selectbox("Vai trò của bạn:", ["KOL / KOC Review", "Sale / Bán hàng", "Chuyên gia / Đào tạo", "Idol Livestream", "Chủ Doanh Nghiệp"])
@@ -158,12 +157,21 @@ with tab1:
 
     c1, c2 = st.columns([1, 1.2])
     with c1:
-        if st.button("🔍 Phân tích Top Trend Hôm nay (Bởi Gemini)", use_container_width=True):
-            with st.spinner("Đang phân tích dữ liệu mạng xã hội theo tệp người dùng..."):
+        if st.button("🔍 Phân tích Top Trend Hôm nay", use_container_width=True):
+            with st.spinner(f"Đang phân tích thị trường cho {role}..."):
                 try:
-                    # Prompt động dựa trên lựa chọn của người dùng WebApp
-                    prompt_trend = [f"Hôm nay là ngày hiện tại. Bạn là Giám đốc Sáng tạo. Hãy phân tích xu hướng MXH hôm nay phù hợp cho một người làm '{role}', nhắm đến tệp khách hàng '{target_age}' tại '{target_region}'. Bắt buộc trả về đúng 3 dòng định dạng sau:\nSản phẩm: [1 Sản phẩm/Chủ đề cực hot để đăng bài]\nĐối tượng: [Chi tiết tệp khách hàng]\nTrend: [1 Xu hướng, câu nói hoặc sự kiện đang viral hôm nay]"]
-                    res_trend = generate_with_key_rotation(prompt_trend)
+                    # PROMPT MỚI: Ép AI "tẩy não" mảng pháp lý nếu không phải Chủ Doanh Nghiệp
+                    q_trend = f"""Bạn là Chuyên gia phân tích dữ liệu mạng xã hội (TikTok/Facebook Trend) xuất sắc nhất.
+                    LỆNH TỐI QUAN TRỌNG: Xóa bỏ hoàn toàn bộ nhớ về "Trạm Tuân Thủ", "Pháp lý", "B2B", "Doanh nghiệp" nếu Vai trò dưới đây không phải là Chủ Doanh Nghiệp.
+                    Hãy phân tích xu hướng MỚI NHẤT hôm nay cho vai trò '{role}', nhắm đến '{target_age}', tại văn hóa '{target_region}'.
+                    - Nếu là Idol/KOL/Sale: Bắt buộc chọn các chủ đề B2C hot như: Mỹ phẩm, Thời trang, Ẩm thực, Đồ công nghệ, Đồ gia dụng tiện ích.
+                    - Trend phải là các từ lóng (slang), câu nói viral, drama giới trẻ, hoặc phong cách sống đang thịnh hành.
+                    Bắt buộc trả về đúng 3 dòng định dạng sau:
+                    Sản phẩm: [Tên 1 sản phẩm/chủ đề cụ thể, VD: Son tint bóng, Áo babytee, Nồi chiên không dầu...]
+                    Đối tượng: [Chi tiết tệp {target_age} tại {target_region}]
+                    Trend: [1 Câu nói viral, trend TikTok, hoặc nỗi đau mua sắm đang hot]"""
+                    
+                    res_trend = generate_with_key_rotation([q_trend])
                     
                     import re
                     sp_match = re.search(r'Sản phẩm:\s*(.*)', res_trend)
@@ -197,7 +205,6 @@ with tab1:
                                 img_data = base64.b64decode(acc['character_b64'].split(',')[1])
                                 char_img = Image.open(io.BytesIO(img_data))
                                 prompt_data.append(char_img)
-                                # ÉP CÁC TỪ KHÓA NHIẾP ẢNH VÀ ĐẶC ĐIỂM NHẬN DẠNG CHI TIẾT
                                 prompt_data[0] += f"\nIMPORTANT VISUAL RULE: I attached a reference image. The [PROMPT] MUST be a single cohesive English paragraph that includes: 1) EXACT facial extraction (ethnicity, face shape like oval, specific features like moles, eye shape, skin tone, exact hairstyle) from the image. 2) Place this EXACT character in a highly realistic setting interacting with '{sp}' or reflecting '{tr}'. 3) Append these mandatory photography keywords: 'shot on 35mm lens, candid street photography, highly detailed skin texture, pores visible, natural cinematic lighting, photorealistic, 8k, ultra-realistic'. DO NOT make it look plastic or 3D."
                             except: pass
                     
