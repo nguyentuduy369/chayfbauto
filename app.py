@@ -160,31 +160,65 @@ with tab2:
     cl, cr = st.columns([1, 1])
     with cl:
         engine = st.selectbox("Lựa chọn Máy chủ (Đã kiểm chứng):", [
-            "1. FLUX.1 Schnell (Đã test chạy Tốt)",
-            "2. DreamShaper XL (Phong cách Đa dạng - Tốt)"
+            "1. FLUX.1 Schnell (Máy chủ Hugging Face - Đã test Tốt)",
+            "2. Stable Diffusion XL (Máy chủ Together AI - Cực Nhanh)"
         ])
         p_final = st.text_area("Xác nhận Lệnh vẽ (Tiếng Anh):", st.session_state.get('prompt',''), height=150)
         
         if st.button("🎨 VẼ ẢNH NGAY"):
             with st.spinner(f"Đang kết nối {engine.split('(')[0].strip()}..."):
                 try:
-                    hf_headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-                    
-                    if "FLUX" in engine:
+                    if "Together AI" in engine:
+                        # ---------------------------------------------------------
+                        # MÁY CHỦ 2: TOGETHER AI (ỔN ĐỊNH, DÙNG API KEY MỚI)
+                        # ---------------------------------------------------------
+                        together_key = st.secrets.get("TOGETHER_API_KEY")
+                        if not together_key:
+                            st.error("❌ Chưa có TOGETHER_API_KEY trong Secrets. Vui lòng cài đặt!")
+                            st.stop()
+                            
+                        url = "https://api.together.xyz/v1/images/generations"
+                        headers = {
+                            "Authorization": f"Bearer {together_key}",
+                            "Content-Type": "application/json"
+                        }
+                        payload = {
+                            "model": "stabilityai/stable-diffusion-xl-base-1.0",
+                            "prompt": p_final,
+                            "n": 1,
+                            "steps": 20,
+                            "response_format": "b64_json"
+                        }
+                        res = requests.post(url, headers=headers, json=payload, timeout=40)
+                        data = res.json()
+                        
+                        if "data" in data and len(data["data"]) > 0:
+                            import base64
+                            b64_img = data["data"][0]["b64_json"]
+                            st.session_state.img_res = base64.b64decode(b64_img)
+                            st.success("Tuyệt vời! Together AI đã tạo ảnh thành công.")
+                        elif "error" in data:
+                            st.error(f"Lỗi Together AI: {data['error']['message']}")
+                        else:
+                            st.error(f"Lỗi API: {data}")
+                            
+                    else:
+                        # ---------------------------------------------------------
+                        # MÁY CHỦ 1: HUGGING FACE (FLUX.1 SCHNELL)
+                        # ---------------------------------------------------------
+                        hf_headers = {"Authorization": f"Bearer {HF_TOKEN}"}
                         model_url = "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell"
-                    else:
-                        model_url = "https://router.huggingface.co/hf-inference/models/Lykon/dreamshaper-xl-turbo"
 
-                    res = requests.post(model_url, headers=hf_headers, json={"inputs": p_final}, timeout=40)
-                    
-                    if res.status_code == 200 and 'image' in res.headers.get('content-type', ''):
-                        st.session_state.img_res = res.content
-                        st.success("Tuyệt vời! Ảnh đã được tạo thành công.")
-                    elif res.status_code == 503:
-                        st.error("Máy chủ đang tải model (Mã 503). Vui lòng đợi khoảng 20 giây và bấm nút vẽ lại.")
-                    else:
-                        err_msg = res.json().get('error', 'Không rõ lỗi') if 'application/json' in res.headers.get('content-type', '') else res.text
-                        st.error(f"HF báo lỗi {res.status_code}: {err_msg}")
+                        res = requests.post(model_url, headers=hf_headers, json={"inputs": p_final}, timeout=40)
+                        
+                        if res.status_code == 200 and 'image' in res.headers.get('content-type', ''):
+                            st.session_state.img_res = res.content
+                            st.success("Tuyệt vời! Hugging Face đã tạo ảnh thành công.")
+                        elif res.status_code == 503:
+                            st.error("Máy chủ đang tải model (Mã 503). Vui lòng đợi khoảng 20 giây và bấm nút vẽ lại.")
+                        else:
+                            err_msg = res.json().get('error', 'Không rõ lỗi') if 'application/json' in res.headers.get('content-type', '') else res.text
+                            st.error(f"HF báo lỗi {res.status_code}: {err_msg}")
 
                 except Exception as e:
                     st.error(f"Lỗi kết nối hệ thống: {e}")
