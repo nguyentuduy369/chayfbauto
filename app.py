@@ -123,11 +123,24 @@ with st.sidebar:
     st.markdown(f"**👁️ Lượt truy cập:** `{stats['visitors']:,}`")
     st.divider()
 
-    # --- 2. Ý TƯỞNG MINH HỌA (Đóng mặc định) ---
+    # --- 2. Ý TƯỞNG MINH HỌA (Có hiệu ứng thu hút) ---
     st.subheader("📸 Ý Tưởng Minh Họa")
-    st.caption("Mở ra khu vực bên dưới hỗ trợ đồng bộ ảnh khuôn mặt bối cảnh nhân vật.")
     
-    with st.expander("Cuộn Knowled - Tạo Ảnh", expanded=False):
+    # CSS Hiệu ứng nhấp nháy thu hút sự chú ý
+    st.markdown("""
+        <div style="animation: pulse 1.5s infinite; color: #ff4b4b; font-size: 13px; font-weight: bold; margin-bottom: 8px;">
+            👇 Bấm vào khung dưới đây để nạp ảnh cho AI
+        </div>
+        <style>
+        @keyframes pulse {
+            0% { opacity: 1; transform: translateY(0); }
+            50% { opacity: 0.5; transform: translateY(3px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    
+    with st.expander("🧠 NẠP TRI THỨC & ẢNH MẪU (Click Mở)", expanded=False):
         st.session_state.char1_b64 = image_to_base64(st.file_uploader("Nhân vật 1 (Chính):", type=['jpg', 'png'], key="c1"))
         st.session_state.char2_b64 = image_to_base64(st.file_uploader("Nhân vật 2 (Phụ):", type=['jpg', 'png'], key="c2"))
         st.session_state.pet_b64 = image_to_base64(st.file_uploader("Thú cưng:", type=['jpg', 'png'], key="pet"))
@@ -135,7 +148,7 @@ with st.sidebar:
 
     st.divider()
     
-    # --- 3. LIÊN KẾT ĐA NỀN TẢNG (Hiệu ứng Băng chuyền vô cực) ---
+    # --- 3. LIÊN KẾT ĐA NỀN TẢNG (Đã fix lỗi Icon Shopee) ---
     st.subheader("🌐 Liên Kết Đa Nền Tảng")
     
     marquee_html = """
@@ -147,7 +160,7 @@ with st.sidebar:
     .marquee-content {
         display: inline-block; animation: marquee 12s linear infinite;
     }
-    .marquee-content:hover { animation-play-state: paused; } /* Dừng lại khi di chuột vào */
+    .marquee-content:hover { animation-play-state: paused; }
     .marquee-content img { width: 32px; margin: 0 8px; border-radius: 8px; transition: transform 0.2s; cursor: pointer; }
     .marquee-content img:hover { transform: scale(1.2); }
     @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-50%, 0); } }
@@ -158,13 +171,13 @@ with st.sidebar:
             <a href="https://tiktok.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/3046/3046121.png" title="TikTok"></a>
             <a href="https://youtube.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" title="YouTube"></a>
             <a href="https://instagram.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" title="Instagram"></a>
-            <a href="https://shopee.vn" target="_blank"><img src="https://images.squarespace-cdn.com/content/v1/53883795e4b016c956b8d243/1597816174880-PWHGEU9OMHDF8Y7KOTK6/shopee-logo-40483.png" title="Shopee"></a>
+            <a href="https://shopee.vn" target="_blank"><img src="https://img.icons8.com/color/48/shopee.png" title="Shopee"></a>
             <a href="https://threads.net" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/11820/11820089.png" title="Threads"></a>
             <a href="https://facebook.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/124/124010.png" title="Facebook"></a>
             <a href="https://tiktok.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/3046/3046121.png" title="TikTok"></a>
             <a href="https://youtube.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" title="YouTube"></a>
             <a href="https://instagram.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" title="Instagram"></a>
-            <a href="https://shopee.vn" target="_blank"><img src="https://images.squarespace-cdn.com/content/v1/53883795e4b016c956b8d243/1597816174880-PWHGEU9OMHDF8Y7KOTK6/shopee-logo-40483.png" title="Shopee"></a>
+            <a href="https://shopee.vn" target="_blank"><img src="https://img.icons8.com/color/48/shopee.png" title="Shopee"></a>
             <a href="https://threads.net" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/11820/11820089.png" title="Threads"></a>
         </div>
     </div>
@@ -172,20 +185,22 @@ with st.sidebar:
     st.markdown(marquee_html, unsafe_allow_html=True)
     st.divider()
 
-    # --- 4. HỖ TRỢ KỸ THUẬT 24/24 (Tách riêng) ---
+    # --- 4. HỖ TRỢ KỸ THUẬT 24/24 (Đã thêm Hotline) ---
     st.subheader("🛠️ Hỗ Trợ Kỹ Thuật 24/24")
-    btn_style = "display:block; width:100%; border-radius:5px; color:white; border:none; padding:8px; text-align:center; font-weight:bold; text-decoration:none; margin-bottom:10px; font-size:14px; display:flex; align-items:center; justify-content:center; gap:8px;"
     
+    # Nút Hotline
+    st.markdown('<div style="background:#2ecc71; color:white; padding:10px; border-radius:5px; text-align:center; font-weight:bold; font-size:16px; margin-bottom:10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">📞 Hotline: 1900 8xxx</div>', unsafe_allow_html=True)
+    
+    btn_style = "display:block; width:100%; border-radius:5px; color:white; border:none; padding:8px; text-align:center; font-weight:bold; text-decoration:none; margin-bottom:10px; font-size:14px; display:flex; align-items:center; justify-content:center; gap:8px;"
     c_zl, c_tl = st.columns(2)
     with c_zl: st.markdown(f'<a href="https://zalo.me/0586999991" target="_blank" style="{btn_style} background:#0068FF;"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Icon_of_Zalo.svg/1200px-Icon_of_Zalo.svg.png" width="16"> Zalo</a>', unsafe_allow_html=True)
     with c_tl: st.markdown(f'<a href="https://t.me/ntd934924200" target="_blank" style="{btn_style} background:#24A1DE;"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111646.png" width="16"> Telegram</a>', unsafe_allow_html=True)
     st.divider()
     
-    # --- 5. MONG LỜI BÌNH ĐÁNH GIÁ (Widget Ngôi sao 1 dòng) ---
+    # --- 5. MONG LỜI BÌNH ĐÁNH GIÁ ---
     st.subheader("⭐ Mong Lời Bình Đánh Giá")
     st.caption("Hãy gửi đánh giá, đóng góp, ý kiến của bạn vào hộp thoại bên dưới để chúng tôi hoàn thiện ViralSync Pro tốt hơn.")
     
-    # Tính năng st.feedback mới của Streamlit (Tạo thanh 5 sao ngang tương tác cực xịn)
     rating_val = st.feedback("stars")
     feedback_text = st.text_area("Ý kiến của bạn:", placeholder="Gõ góp ý vào đây...", height=80, label_visibility="collapsed")
     
@@ -193,17 +208,13 @@ with st.sidebar:
         if feedback_text.strip():
             with st.spinner("Đang truyền tín hiệu..."):
                 try:
-                    # BẠN ĐIỀN THÔNG TIN BOT VÀO ĐÂY:
                     bot_token = "8681696911:AAHiyQUGMzWRkOuOVtiXsu-2VYegfzP0_og"
                     chat_id = "7823053892"
                     
-                    # Chuyển đổi số sao (0-4) thành text
                     star_text = "Chưa chọn sao" if rating_val is None else "⭐" * (rating_val + 1)
-                    
                     msg = f"🌟 ĐÁNH GIÁ VIRALSYNC PRO:\n- Mức độ: {star_text}\n- Ý kiến: {feedback_text}"
                     safe_msg = urllib.parse.quote(msg)
                     
-                    # Dùng URL GET trực tiếp để tránh lỗi JSON của Streamlit
                     url = f"https://api.telegram.org/bot{bot_token}/sendMessage?chat_id={chat_id}&text={safe_msg}"
                     res = requests.get(url, timeout=10)
                     
