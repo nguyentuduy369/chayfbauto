@@ -423,147 +423,144 @@ import time
 
 with tab2:
     st.markdown('<div class="step-title">BƯỚC 2: STUDIO ẢNH AI 🎨 <span class="arrow-anim">>></span></div>', unsafe_allow_html=True)
-    st.markdown('<div class="step-sub">Khởi tạo các biến thể hình ảnh độc đáo với đa dạng Động cơ AI (FLUX & Google Gemini).</div>', unsafe_allow_html=True)
+    st.markdown('<div class="step-sub">Khởi tạo các biến thể hình ảnh độc đáo. Chọn FLUX cho tốc độ, hoặc Gemini cho chất lượng thương mại.</div>', unsafe_allow_html=True)
 
-    c_img1, c_img2 = st.columns([1, 1.4])
+    # ==========================================
+    # KHU VỰC TRÊN: BẢNG ĐIỀU KHIỂN (TOOLS)
+    # ==========================================
+    st.markdown('<div class="block-title">⚙️ 1. Cấu hình Máy ảnh & Lệnh Đạo diễn</div>', unsafe_allow_html=True)
     
-    with c_img1:
-        st.markdown('<div class="block-title">⚙️ 1. Cấu hình Máy ảnh (Camera Settings)</div>', unsafe_allow_html=True)
-        
-        p_final = st.text_area("📝 Lệnh Đạo diễn Hình ảnh (EN):", st.session_state.get('prompt',''), height=150, help="Lệnh được kế thừa từ Bước 1.")
-        
-        # --- BỔ SUNG KHỐI LỰA CHỌN ĐỘNG CƠ AI ---
-        ai_model = st.selectbox("🤖 Động cơ AI (Engine):", [
-            "🚀 FLUX.1 Schnell (Miễn phí / Tốc độ cao)",
-            "💎 Gemini 3.1 Flash Image (Preview)",
-            "💎 Gemini 3 Pro Image (Preview)",
-            "💎 Nano Banana Pro (Preview)"
-        ], help="FLUX.1 dùng máy chủ HuggingFace. Gemini dùng API Key của Google.")
-
-        col_s1, col_s2 = st.columns(2)
-        with col_s1:
-            ratio = st.selectbox("📐 Tỷ lệ ảnh:", ["9:16 (Story/Reels)", "1:1 (Post FB/Vuông)", "16:9 (Video Ngang)", "4:3 (Tiêu chuẩn)"])
-        with col_s2:
-            style = st.selectbox("🎭 Phong cách:", ["Photorealistic", "Cinematic", "3D Pixar", "Anime / Manga", "Watercolor"])
-        
-        num_imgs = st.slider("🔢 Số lượng biến thể:", 1, 4, 2, help="Tạo nhiều ảnh để so sánh (Tối đa 4 để tránh nghẽn API).")
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        if st.button(f"🎨 KHỞI ĐỘNG STUDIO VÀ VẼ {num_imgs} ẢNH", type="primary", use_container_width=True):
-            if not p_final.strip():
-                st.error("⚠️ Vui lòng nhập Lệnh Đạo diễn (Prompt) trước khi vẽ!")
-            else:
-                st.session_state.img_list = []
-                with st.spinner(f"Đang gọi {ai_model.split(' ')[1]} render {num_imgs} biến thể..."):
-                    try:
-                        # 1. Tính toán Pixel & Tẩy tỷ lệ cũ
-                        w, h = 768, 1344
-                        ratio_str = "9:16"
-                        if ratio.startswith("1:1"): w, h, ratio_str = 1024, 1024, "1:1"
-                        elif ratio.startswith("16:9"): w, h, ratio_str = 1344, 768, "16:9"
-                        elif ratio.startswith("4:3"): w, h, ratio_str = 1152, 896, "4:3"
-                        
-                        clean_prompt = p_final.replace("9:16 ratio", f"{ratio_str} ratio").replace("9:16", ratio_str)
-
-                        # 2. Bộ lọc Phong cách & Xào trộn góc máy
-                        style_prompts = {
-                            "Photorealistic": "masterpiece, photorealistic, 8k resolution, RAW photo",
-                            "Cinematic": "cinematic lighting, dramatic shadows, epic composition, movie still",
-                            "3D Pixar": "3D render, Pixar style, Disney style, octane render",
-                            "Anime / Manga": "anime artwork, Studio Ghibli style, vibrant colors",
-                            "Watercolor": "watercolor painting, brush strokes, artistic"
-                        }
-                        camera_angles = [
-                            "eye-level shot, symmetrical balance", 
-                            "low angle shot, dynamic perspective", 
-                            "slightly high angle, showing environment", 
-                            "dutch angle, cinematic movement"
-                        ]
-
-                        # --- LOGIC GỌI API THEO MODEL ---
-                        if "FLUX" in ai_model:
-                            hf_headers = {"Authorization": f"Bearer {HF_TOKEN}"} # Đảm bảo bạn có HF_TOKEN ở trên
-                            model_url = "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell"
-                            
-                            for i in range(num_imgs):
-                                st.toast(f"Đang vẽ ảnh {i+1}/{num_imgs} (FLUX)...")
-                                run_prompt = f"{clean_prompt}, {style_prompts.get(style, '')}, {camera_angles[i % 4]}"
-                                payload = {"inputs": run_prompt, "parameters": {"width": w, "height": h}}
-                                res = requests.post(model_url, headers=hf_headers, json=payload, timeout=50)
-                                
-                                if res.status_code == 200:
-                                    st.session_state.img_list.append(res.content)
-                                elif res.status_code == 429:
-                                    st.markdown('<p style="color:red; font-weight:bold; font-size: 16px;">🚨 Token trải nghiệm đã hết, hãy chờ một lát hoặc dùng hệ thống khác.</p>', unsafe_allow_html=True)
-                                    break
-                                time.sleep(1)
-
-                        else:
-                            # LOGIC CHO GOOGLE GEMINI MODELS
-                            gemini_model_name = "models/gemini-3.1-flash-image-preview"
-                            if "3 Pro" in ai_model: gemini_model_name = "models/gemini-3-pro-image-preview"
-                            elif "Nano Banana" in ai_model: gemini_model_name = "models/nano-banana-pro-preview"
-
-                            # Tự động lấy API key từ hệ thống xoay vòng của bạn (nếu có GEMINI_API_KEYS)
-                            api_key = GEMINI_API_KEYS[0] if 'GEMINI_API_KEYS' in globals() and GEMINI_API_KEYS else ""
-                            
-                            for i in range(num_imgs):
-                                st.toast(f"Đang vẽ ảnh {i+1}/{num_imgs} ({ai_model.split(' ')[1]})...")
-                                run_prompt = f"{clean_prompt}, {style_prompts.get(style, '')}, {camera_angles[i % 4]}"
-                                
-                                url = f"https://generativelanguage.googleapis.com/v1beta/{gemini_model_name}:predict?key={api_key}"
-                                payload = {
-                                    "instances": [{"prompt": run_prompt}],
-                                    "parameters": {"sampleCount": 1}
-                                }
-                                
-                                res = requests.post(url, json=payload, timeout=60)
-                                
-                                # --- BẪY LỖI QUOTA (429 HOẶC RESOURCE EXHAUSTED) ---
-                                if res.status_code == 200:
-                                    data = res.json()
-                                    if "predictions" in data and len(data["predictions"]) > 0:
-                                        b64_img = data["predictions"][0].get("bytesBase64")
-                                        if b64_img:
-                                            st.session_state.img_list.append(base64.b64decode(b64_img))
-                                elif res.status_code == 429 or "quota" in res.text.lower() or "exhausted" in res.text.lower():
-                                    st.markdown('<p style="color:red; font-weight:bold; font-size: 16px;">🚨 Token trải nghiệm đã hết, hãy lựa chọn FLUX 1.0 để tiếp tục</p>', unsafe_allow_html=True)
-                                    break # Dừng vòng lặp ngay lập tức
-                                else:
-                                    # Các lỗi khác không phải quota
-                                    st.error(f"Lỗi kết nối Gemini (Mã {res.status_code})")
-                                    break
-                                time.sleep(1.5)
-
-                        if len(st.session_state.img_list) > 0:
-                            st.success(f"✅ Đã kết xuất thành công {len(st.session_state.img_list)} hình ảnh từ {ai_model.split(' ')[1]}!")
-
-                    except Exception as e:
-                        # Bẫy lỗi phụ khi Exception quăng ra có chứa chữ Quota
-                        err_str = str(e).lower()
-                        if "quota" in err_str or "429" in err_str or "exhausted" in err_str:
-                            st.markdown('<p style="color:red; font-weight:bold; font-size: 16px;">🚨 Token trải nghiệm đã hết, hãy lựa chọn FLUX 1.0 để tiếp tục</p>', unsafe_allow_html=True)
-                        else:
-                            st.error(f"Lỗi hệ thống đồ họa: {e}")
-
-    with c_img2:
-        st.markdown('<div class="block-title">🖼️ 2. Màn hình Kiểm duyệt (Preview)</div>', unsafe_allow_html=True)
-        
-        # Giao diện Lưới (Grid) hiển thị đa ảnh
-        if 'img_list' in st.session_state and st.session_state.img_list:
-            cols = st.columns(2)
-            for idx, img_data in enumerate(st.session_state.img_list):
-                with cols[idx % 2]:
-                    st.image(img_data, use_container_width=True, caption=f"Biến thể {idx+1}")
-                    st.download_button(f"📥 Tải Ảnh {idx+1}", img_data, f"viralsync_art_{idx+1}.png", "image/png", use_container_width=True, key=f"dl_btn_{idx}")
+    # Prompt dàn toàn dải để dễ nhìn
+    p_final = st.text_area("📝 Lệnh Đạo diễn Hình ảnh (EN):", st.session_state.get('prompt',''), height=100, help="Lệnh được tự động kế thừa từ Bước 1.")
+    
+    # Các nút cài đặt chia thành 4 cột ngang nhau
+    col_s1, col_s2, col_s3, col_s4 = st.columns(4)
+    with col_s1:
+        ai_model = st.selectbox("🤖 Động cơ AI:", [
+            "🚀 FLUX.1 Schnell (Miễn phí)",
+            "💎 Gemini 3.1 Flash Image",
+            "💎 Gemini 3 Pro Image",
+            "💎 Nano Banana Pro"
+        ])
+    with col_s2:
+        ratio = st.selectbox("📐 Tỷ lệ ảnh:", ["9:16 (Story/Reels)", "1:1 (Post FB)", "16:9 (Video Ngang)", "4:3 (Tiêu chuẩn)"])
+    with col_s3:
+        style = st.selectbox("🎭 Phong cách:", ["Photorealistic", "Cinematic", "3D Pixar", "Anime / Manga", "Watercolor"])
+    with col_s4:
+        num_imgs = st.slider("🔢 Số lượng biến thể:", 1, 4, 2)
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Nút bấm trung tâm
+    if st.button(f"🎨 KHỞI ĐỘNG STUDIO VÀ VẼ {num_imgs} ẢNH", type="primary", use_container_width=True):
+        if not p_final.strip():
+            st.error("⚠️ Vui lòng nhập Lệnh Đạo diễn (Prompt) trước khi vẽ!")
         else:
-            st.markdown("""
-            <div style="border: 3px dashed #E5E7EB; border-radius: 12px; padding: 60px 20px; text-align: center; color: #9CA3AF; background-color: #F9FAFB;">
-                <h3 style="margin-bottom: 10px; color: #6B7280;">Khu Vực Hiển Thị Hình Ảnh</h3>
-                <p style="font-size: 14px;">Chọn động cơ AI, số lượng và bấm Khởi động Studio bên trái để xuất bản hàng loạt biến thể.</p>
-                <div style="font-size: 40px; margin-top: 15px;">🖼️</div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.session_state.img_list = []
+            with st.spinner(f"Đang gọi {ai_model.split(' ')[1]} render {num_imgs} biến thể..."):
+                try:
+                    w, h = 768, 1344
+                    ratio_str = "9:16"
+                    if ratio.startswith("1:1"): w, h, ratio_str = 1024, 1024, "1:1"
+                    elif ratio.startswith("16:9"): w, h, ratio_str = 1344, 768, "16:9"
+                    elif ratio.startswith("4:3"): w, h, ratio_str = 1152, 896, "4:3"
+                    
+                    clean_prompt = p_final.replace("9:16 ratio", f"{ratio_str} ratio").replace("9:16", ratio_str)
+
+                    style_prompts = {
+                        "Photorealistic": "masterpiece, photorealistic, 8k resolution, RAW photo",
+                        "Cinematic": "cinematic lighting, dramatic shadows, epic composition, movie still",
+                        "3D Pixar": "3D render, Pixar style, Disney style, octane render",
+                        "Anime / Manga": "anime artwork, Studio Ghibli style, vibrant colors",
+                        "Watercolor": "watercolor painting, brush strokes, artistic"
+                    }
+                    camera_angles = [
+                        "eye-level shot, symmetrical balance", 
+                        "low angle shot, dynamic perspective", 
+                        "slightly high angle, showing environment", 
+                        "dutch angle, cinematic movement"
+                    ]
+
+                    # --- LOGIC GỌI API ---
+                    if "FLUX" in ai_model:
+                        hf_headers = {"Authorization": f"Bearer {HF_TOKEN}"}
+                        model_url = "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell"
+                        
+                        for i in range(num_imgs):
+                            st.toast(f"Đang vẽ ảnh {i+1}/{num_imgs} (FLUX)...")
+                            run_prompt = f"{clean_prompt}, {style_prompts.get(style, '')}, {camera_angles[i % 4]}"
+                            payload = {"inputs": run_prompt, "parameters": {"width": w, "height": h}}
+                            res = requests.post(model_url, headers=hf_headers, json=payload, timeout=50)
+                            
+                            if res.status_code == 200:
+                                st.session_state.img_list.append(res.content)
+                            else:
+                                st.markdown('<p style="color:#e74c3c; font-weight:bold; font-size: 16px; text-align:center; background:#fadbd8; padding:10px; border-radius:5px;">🚨 Máy chủ FLUX đang quá tải hoặc hết Credit. Vui lòng thử lại sau!</p>', unsafe_allow_html=True)
+                                break
+                            time.sleep(1)
+                    else:
+                        # LOGIC GOOGLE GEMINI
+                        gemini_model_name = "models/gemini-3.1-flash-image-preview"
+                        if "3 Pro" in ai_model: gemini_model_name = "models/gemini-3-pro-image-preview"
+                        elif "Nano Banana" in ai_model: gemini_model_name = "models/nano-banana-pro-preview"
+
+                        api_key = GEMINI_API_KEYS[0] if 'GEMINI_API_KEYS' in globals() and GEMINI_API_KEYS else ""
+                        
+                        for i in range(num_imgs):
+                            st.toast(f"Đang vẽ ảnh {i+1}/{num_imgs} ({ai_model.split(' ')[1]})...")
+                            run_prompt = f"{clean_prompt}, {style_prompts.get(style, '')}, {camera_angles[i % 4]}"
+                            
+                            url = f"https://generativelanguage.googleapis.com/v1beta/{gemini_model_name}:predict?key={api_key}"
+                            payload = {
+                                "instances": [{"prompt": run_prompt}],
+                                "parameters": {"sampleCount": 1}
+                            }
+                            
+                            res = requests.post(url, json=payload, timeout=60)
+                            
+                            # Gom chung TẤT CẢ các lỗi từ Google (403, 429, 500...) vào 1 thông báo
+                            if res.status_code == 200:
+                                data = res.json()
+                                if "predictions" in data and len(data["predictions"]) > 0:
+                                    b64_img = data["predictions"][0].get("bytesBase64")
+                                    if b64_img:
+                                        st.session_state.img_list.append(base64.b64decode(b64_img))
+                            else:
+                                st.markdown('<p style="color:#e74c3c; font-weight:bold; font-size: 16px; text-align:center; background:#fadbd8; padding:10px; border-radius:5px;">🚨 Credit Trải Nghiệm Của Động Cơ Này Đã Hết (Hoặc quá tải). Hãy đổi sang [🚀 FLUX.1 Schnell] để tiếp tục công việc!</p>', unsafe_allow_html=True)
+                                break
+                            time.sleep(1.5)
+
+                    if len(st.session_state.img_list) > 0:
+                        st.success(f"✅ Đã kết xuất thành công {len(st.session_state.img_list)} hình ảnh! (Phím ESC để thoát chế độ xem to)")
+
+                except Exception as e:
+                    # Bẫy luôn cả Exception đứt cáp, lỗi mạng
+                    st.markdown('<p style="color:#e74c3c; font-weight:bold; font-size: 16px; text-align:center; background:#fadbd8; padding:10px; border-radius:5px;">🚨 Credit Trải Nghiệm Đã Hết Hoặc Mạng Lỗi. Hãy sử dụng [🚀 FLUX.1 Schnell] để tiếp tục công việc!</p>', unsafe_allow_html=True)
+
+    st.divider()
+
+    # ==========================================
+    # KHU VỰC DƯỚI: MÀN HÌNH KIỂM DUYỆT (PREVIEW) TOÀN DẢI
+    # ==========================================
+    st.markdown('<div class="block-title">🖼️ 2. Màn hình Kiểm duyệt & Tải xuống (Preview)</div>', unsafe_allow_html=True)
+    
+    if 'img_list' in st.session_state and st.session_state.img_list:
+        # Tự động chia cột dàn ngang tùy theo số lượng ảnh (tối đa 4 cột cho 4 ảnh)
+        num_generated = len(st.session_state.img_list)
+        cols = st.columns(num_generated)
+        
+        for idx, img_data in enumerate(st.session_state.img_list):
+            with cols[idx]:
+                st.image(img_data, use_container_width=True, caption=f"Biến thể {idx+1}")
+                st.download_button(f"📥 Tải Ảnh Này", img_data, f"viralsync_art_{idx+1}.png", "image/png", use_container_width=True, key=f"dl_btn_{idx}")
+    else:
+        st.markdown("""
+        <div style="border: 3px dashed #E5E7EB; border-radius: 12px; padding: 80px 20px; text-align: center; color: #9CA3AF; background-color: #F9FAFB; width: 100%;">
+            <h3 style="margin-bottom: 10px; color: #6B7280;">Chưa Có Dữ Liệu Hình Ảnh</h3>
+            <p style="font-size: 14px;">Hãy tùy chỉnh các thông số ở trên và bấm Khởi động Studio. Lưới ảnh sẽ hiện ra tại đây!</p>
+            <div style="font-size: 50px; margin-top: 15px;">📸</div>
+        </div>
+        """, unsafe_allow_html=True)
 with tab3:
     st.header("📤 Trạm Xuất Bản Nội Dung (Smart Compliance Hub)")
     
