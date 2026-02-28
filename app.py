@@ -155,54 +155,39 @@ with tab1:
         copy_button(st.session_state.prompt, "🖼️ Copy Prompt")
 
 with tab2:
-    st.subheader("🎨 Studio Ảnh (Nano Banana Pro)")
+    st.subheader("🎨 Studio Ảnh (Pollinations - Miễn phí)")
     cl, cr = st.columns([1, 1])
     with cl:
         p_final = st.text_area("Xác nhận Lệnh vẽ (Tiếng Anh):", st.session_state.get('prompt',''), height=150)
-        if st.button("🎨 VẼ ẢNH VỚI NANO BANANA PRO"):
-            with st.spinner("Đang kết nối API Nano Banana Pro..."):
+        if st.button("🎨 VẼ ẢNH VỚI POLLINATIONS"):
+            with st.spinner("Trạm Tuân Thủ Thông Minh đang kết nối máy chủ Pollinations..."):
                 try:
-                    # Đổi endpoint sang nano-banana-pro-preview theo yêu cầu của bạn
-                    url = f"https://generativelanguage.googleapis.com/v1beta/models/nano-banana-pro-preview:generateContent?key={GEMINI_API_KEY}"
+                    import random
+                    # Tạo seed ngẫu nhiên để tránh máy chủ trả về ảnh cũ (cache)
+                    seed = random.randint(1, 1000000)
                     
-                    payload = {
-                        "contents": [
-                            {
-                                "parts": [{"text": p_final}]
-                            }
-                        ]
-                    }
+                    # Thêm enhance=true để tối ưu chi tiết ảnh, nologo=true để xóa watermark
+                    url = f"https://image.pollinations.ai/prompt/{requests.utils.quote(p_final)}?width=1024&height=1024&nologo=true&seed={seed}&enhance=true"
                     
-                    res = requests.post(url, json=payload)
-                    data = res.json()
+                    res = requests.get(url, timeout=30)
                     
-                    if "candidates" in data:
-                        import base64
-                        parts = data["candidates"][0]["content"]["parts"]
-                        b64_img = ""
-                        for part in parts:
-                            if "inlineData" in part:
-                                b64_img = part["inlineData"]["data"]
-                                break
-                        
-                        if b64_img:
-                            st.session_state.img_res = base64.b64decode(b64_img)
-                            st.success("Tuyệt vời! Nano Banana Pro đã vẽ xong.")
-                        else:
-                            st.error("Lỗi: Máy chủ không trả về dữ liệu hình ảnh (inlineData).")
-                    elif "error" in data:
-                        st.error(f"Lỗi từ Google: {data['error']['message']}")
+                    # Kiểm tra nghiêm ngặt: Chỉ nhận nếu dữ liệu trả về thực sự là ảnh
+                    if res.status_code == 200 and 'image' in res.headers.get('content-type', ''):
+                        st.session_state.img_res = res.content
+                        st.success("Tuyệt vời! Ảnh đã được tạo thành công.")
                     else:
-                        st.error(f"Lỗi cấu trúc trả về: {data}")
-                except Exception as e: st.error(f"Lỗi hệ thống: {e}")
+                        st.error("Máy chủ Pollinations đang quá tải hoặc trả về dữ liệu lỗi. Vui lòng bấm thử lại.")
+                        
+                except Exception as e: 
+                    st.error(f"Lỗi kết nối hệ thống: {e}")
                 
     with cr:
         if 'img_res' in st.session_state:
             try:
                 st.image(st.session_state.img_res, use_container_width=True)
-                st.download_button("📥 Tải ảnh về", st.session_state.img_res, "nano_banana_post.png", "image/png")
-            except:
-                st.warning("Lỗi hiển thị dữ liệu ảnh.")
+                st.download_button("📥 Tải ảnh về", st.session_state.img_res, "pollinations_post.png", "image/png")
+            except Exception as e:
+                st.warning("Lỗi hiển thị dữ liệu ảnh. Vui lòng bấm vẽ lại.")
 with tab3:
     st.header("📤 Trạm Đăng Bài")
     if st.session_state.get('selected_fb'):
