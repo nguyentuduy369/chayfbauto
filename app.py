@@ -248,9 +248,40 @@ with st.sidebar:
     """
     st.markdown(donate_html, unsafe_allow_html=True)
 # --- MAIN ---
-st.title("🚀 Smart Automation Hub - Nền Tảng")
-tab1, tab2, tab3 = st.tabs(["📝 Bước 1: Content", "🎨 Bước 2: Ảnh AI (Imagen 3)", "📤 Bước 3: Đăng Bài"])
+# --- CSS TÙY CHỈNH GIAO DIỆN TABS (PHÓNG TO & ĐỔI MÀU) ---
+st.markdown("""
+    <style>
+    /* Chỉnh toàn bộ các Tab: Phóng to, in đậm, đổi font */
+    button[data-baseweb="tab"] {
+        font-size: 18px !important;
+        font-weight: 700 !important;
+        color: #64748B !important;
+        padding: 12px 24px !important;
+        text-transform: uppercase;
+        transition: all 0.3s ease;
+    }
+    /* Hiệu ứng khi di chuột qua Tab chưa chọn */
+    button[data-baseweb="tab"]:hover {
+        color: #6C63FF !important;
+        background-color: #f8f9fa !important;
+    }
+    /* Giao diện Tab ĐANG ĐƯỢC CHỌN (Active) */
+    button[data-baseweb="tab"][aria-selected="true"] {
+        color: #6C63FF !important;
+        border-bottom: 4px solid #6C63FF !important;
+        background-color: #F3F4F6 !important;
+        border-radius: 8px 8px 0 0;
+        font-weight: 900 !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
+# --- KHAI BÁO TABS VỚI TÊN GỌI CHUYÊN NGHIỆP ---
+tab1, tab2, tab3 = st.tabs([
+    "📝 1. SÁNG TẠO NỘI DUNG ⏩", 
+    "🎨 2. STUDIO ẢNH AI ⏩", 
+    "🚀 3. ĐỒNG BỘ & XUẤT BẢN"
+])
 with tab1:
     # --- CSS ANIMATION MỚI (Mũi tên cuối dòng, To & Rõ) ---
     st.markdown("""
