@@ -194,8 +194,8 @@ with st.sidebar:
             with st.spinner("Đang truyền tín hiệu..."):
                 try:
                     # BẠN ĐIỀN THÔNG TIN BOT VÀO ĐÂY:
-                    bot_token = "YOUR_TELEGRAM_BOT_TOKEN"
-                    chat_id = "YOUR_TELEGRAM_CHAT_ID"
+                    bot_token = "8681696911:AAHiyQUGMzWRkOuOVtiXsu-2VYegfzP0_og"
+                    chat_id = "7823053892"
                     
                     # Chuyển đổi số sao (0-4) thành text
                     star_text = "Chưa chọn sao" if rating_val is None else "⭐" * (rating_val + 1)
