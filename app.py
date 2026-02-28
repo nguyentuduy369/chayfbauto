@@ -143,17 +143,21 @@ with st.sidebar:
         if acc.get('avatar_b64'): 
             st.image(acc['avatar_b64'], width=60)
             
-        # TÍNH NĂNG MỚI: LOGIN NHANH QUA JAVASCRIPT
+      # TÍNH NĂNG MỚI: LOGIN NHANH QUA JAVASCRIPT
         st.write("🔑 **Hỗ trợ Login Siêu Tốc (Chống Checkpoint)**")
         st.caption("Dùng để đăng bài thủ công (Phương án 1) an toàn 100%.")
         
-        js_code = f"""
-        let c = `{acc.get('cookies', '')}`;
-        c.split(';').forEach(i => document.cookie = i.trim() + "; domain=.facebook.com; path=/");
-        window.location.href="https://www.facebook.com";
-        """
+        # Dọn dẹp cookie rác (xuống dòng, khoảng trắng thừa, nháy kép) để tránh gãy code JS
+        clean_cookie = acc.get('cookies', '').replace('\n', '').replace('\r', '').replace('`', '').replace('"', "'").strip()
+        
+        js_code = f"""let c = "{clean_cookie}";
+c.split(';').forEach(i => {{
+    if(i.trim()) document.cookie = i.trim() + "; domain=.facebook.com; path=/";
+}});
+window.location.href="https://www.facebook.com";"""
+
         st.code(js_code, language="javascript")
-        st.info("👉 **Cách dùng:** Mở tab mới vào facebook.com ➔ Bấm phím **F12** ➔ Chọn tab **Console** ➔ Dán mã trên vào và ấn **Enter**.")
+        st.info("👉 **LƯU Ý:** Bạn BẮT BUỘC phải mở **Tab Ẩn Danh (Incognito)** vào facebook.com ➔ Bấm **F12** ➔ Chọn **Console** ➔ Dán mã trên và ấn **Enter**.")
     else: 
         st.session_state.selected_fb = None
         st.warning("Chưa có Nick FB. Vui lòng thêm ở trên.")
