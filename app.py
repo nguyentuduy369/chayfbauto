@@ -129,15 +129,56 @@ tab1, tab2, tab3 = st.tabs(["📝 Bước 1: Content", "🎨 Bước 2: Ảnh AI
 with tab1:
     c1, c2 = st.columns([1, 1.2])
     with c1:
-        st.subheader("🎯 Thiết lập")
-        sp = st.text_input("Sản phẩm", "Dịch vụ Tuân thủ")
-        kh = st.text_input("Đối tượng", "Chủ doanh nghiệp")
-        tr = st.text_input("Trend", "Tự động hóa")
-        if st.button("✨ TẠO NỘI DUNG"):
-            with st.spinner("Gemini đang viết..."):
+        st.subheader("🎯 Cập nhật Trend Thời Gian Thực")
+        
+        # Nút gọi Gemini phân tích Trend mạng xã hội hôm nay
+        if st.button("🔍 Phân tích Top Trend Hôm nay (Bởi Gemini)"):
+            with st.spinner("Đang quét dữ liệu mạng xã hội hôm nay..."):
                 try:
                     model = genai.GenerativeModel('gemini-2.5-flash')
-                    q = f"Write FB post for {sp} to {kh}, vibe {tr}. Format strictly: [CONTENT] Vietnamese post here ||| [PROMPT] English image prompt here."
+                    prompt_trend = """Hôm nay là ngày hiện tại. Bạn là Giám đốc Sáng tạo (Creative Director) tại Việt Nam. 
+                    Hãy phân tích xu hướng mạng xã hội hôm nay và đưa ra 1 ý tưởng viết bài viral cho thương hiệu 'Trạm Tuân Thủ Thông Minh' (Smart Compliance Hub).
+                    Bắt buộc trả về đúng 3 dòng định dạng sau (Tuyệt đối không giải thích thêm):
+                    Sản phẩm: [1 Dịch vụ cụ thể của Trạm Tuân Thủ Thông Minh phù hợp với trend]
+                    Đối tượng: [1 Tệp khách hàng cụ thể nhất]
+                    Trend: [1 Xu hướng, sự kiện, hoặc nỗi đau (pain point) đang được quan tâm nhất hôm nay]"""
+                    
+                    res_trend = model.generate_content(prompt_trend).text
+                    
+                    # Tự động bóc tách dữ liệu và điền vào ô
+                    import re
+                    sp_match = re.search(r'Sản phẩm:\s*(.*)', res_trend)
+                    dt_match = re.search(r'Đối tượng:\s*(.*)', res_trend)
+                    tr_match = re.search(r'Trend:\s*(.*)', res_trend)
+                    
+                    if sp_match and dt_match and tr_match:
+                        st.session_state.k1 = sp_match.group(1).strip()
+                        st.session_state.k2 = dt_match.group(1).strip()
+                        st.session_state.trend = tr_match.group(1).strip()
+                        st.success("Đã cập nhật bộ từ khóa Hot nhất hôm nay!")
+                    else:
+                        st.warning("Gemini đang bận. Vui lòng bấm thử lại.")
+                except Exception as e:
+                    st.error(f"Lỗi lấy trend: {e}")
+
+        st.divider()
+        sp = st.text_input("Sản phẩm / Dịch vụ", st.session_state.get('k1', "Trạm Tuân Thủ Thông Minh"))
+        kh = st.text_input("Đối tượng", st.session_state.get('k2', "Chủ doanh nghiệp SME"))
+        tr = st.text_input("Trend / Bối cảnh", st.session_state.get('trend', "Tối ưu vận hành"))
+        
+        if st.button("✨ TẠO NỘI DUNG VIRAL"):
+            with st.spinner("Gemini đang viết bài..."):
+                try:
+                    model = genai.GenerativeModel('gemini-2.5-flash')
+                    q = f"""Write a viral Facebook personal profile post for {sp} targeting {kh} with a {tr} vibe.
+                    CRITICAL RULES FOR [CONTENT]:
+                    - Extremely short and punchy (under 150 words).
+                    - Conversational, personal storytelling style (NOT a sales fanpage).
+                    - Start with a strong hook/question.
+                    - End with an open question to drive comments.
+                    - NO hard selling.
+                    Format strictly: [CONTENT] Vietnamese post here ||| [PROMPT] English image prompt here."""
+                    
                     res = model.generate_content(q).text
                     if "|||" in res:
                         st.session_state.content = res.split("|||")[0].replace("[CONTENT]", "").strip()
@@ -149,7 +190,7 @@ with tab1:
                     st.error(f"Lỗi tạo nội dung: {e}")
 
     with c2:
-        st.session_state.content = st.text_area("Bài viết:", st.session_state.get('content',''), height=220)
+        st.session_state.content = st.text_area("Bài viết (Chuẩn viral cá nhân):", st.session_state.get('content',''), height=220)
         copy_button(st.session_state.content, "📋 Copy Content")
         st.divider()
         st.session_state.prompt = st.text_area("Prompt vẽ ảnh (EN):", st.session_state.get('prompt',''), height=100)
