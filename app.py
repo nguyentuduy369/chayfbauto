@@ -10,8 +10,6 @@ from PIL import Image
 import streamlit.components.v1 as components
 
 # --- CẤU HÌNH TRANG ---
-import streamlit as st
-# (Nếu có st.set_page_config thì sửa lại như sau)
 st.set_page_config(page_title="ViralSync Pro", page_icon="🚀", layout="wide")
 
 st.markdown("""
