@@ -156,17 +156,14 @@ with tab1:
         copy_button(st.session_state.prompt, "🖼️ Copy Prompt")
 
 with tab2:
-    st.subheader("🎨 Studio Ảnh (Smart Compliance Hub - Đa Máy Chủ)")
+    st.subheader("🎨 Studio Ảnh (Smart Compliance Hub - Ổn định)")
     cl, cr = st.columns([1, 1])
     with cl:
-        # Danh sách các máy chủ dự phòng
-        engine = st.selectbox("Lựa chọn Máy chủ (Đổi nếu bị lỗi):", [
-            "1. Stable Diffusion XL (Khuyên dùng - Ổn định nhất)",
-            "2. FLUX.1 Schnell (Sắc nét nhưng hay bận)",
-            "3. OpenJourney (Phong cách nghệ thuật)",
-            "4. Pollinations (Máy chủ phụ không cần Key)"
+        engine = st.selectbox("Lựa chọn Máy chủ (Bền vững):", [
+            "1. Stable Diffusion v1.5 (Cổ điển - Nhẹ & Nhanh)",
+            "2. Stable Diffusion v2.1 (Nâng cao)",
+            "3. Pollinations (Máy chủ độc lập)"
         ])
-        
         p_final = st.text_area("Xác nhận Lệnh vẽ (Tiếng Anh):", st.session_state.get('prompt',''), height=150)
         
         if st.button("🎨 VẼ ẢNH NGAY"):
@@ -175,31 +172,34 @@ with tab2:
                     img_bytes = None
                     if "Pollinations" in engine:
                         import random
+                        import urllib.parse
                         seed = random.randint(1, 1000000)
-                        url = f"https://image.pollinations.ai/prompt/{requests.utils.quote(p_final)}?width=1024&height=1024&nologo=true&seed={seed}"
+                        # Dùng urllib.parse để xử lý triệt để lỗi ký tự đặc biệt/xuống dòng
+                        safe_prompt = urllib.parse.quote(p_final.replace('\n', ' '))
+                        url = f"https://image.pollinations.ai/prompt/{safe_prompt}?nologo=true&seed={seed}"
                         res = requests.get(url, timeout=30)
+                        
                         if res.status_code == 200 and 'image' in res.headers.get('content-type', ''):
                             img_bytes = res.content
                         else:
-                            st.error("Pollinations đang quá tải. Hãy chọn máy chủ số 1 hoặc 2.")
+                            st.error("Pollinations đang quá tải. Hãy thử máy chủ 1 hoặc 2.")
                     else:
-                        # Sử dụng Hugging Face Token với các Model khác nhau
                         hf_headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-                        if "Stable Diffusion" in engine:
-                            model_url = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0"
-                        elif "FLUX" in engine:
-                            model_url = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
+                        if "v1.5" in engine:
+                            model_url = "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5"
                         else:
-                            model_url = "https://api-inference.huggingface.co/models/prompthero/openjourney"
+                            model_url = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1"
 
                         res = requests.post(model_url, headers=hf_headers, json={"inputs": p_final}, timeout=40)
                         
                         if res.status_code == 200 and 'image' in res.headers.get('content-type', ''):
                             img_bytes = res.content
                         elif res.status_code == 503:
-                            st.error(f"Máy chủ đang khởi động (Mã 503). Vui lòng đợi 20 giây và bấm lại, hoặc chọn máy chủ khác.")
+                            st.error("Máy chủ đang khởi động (Mã 503). Vui lòng đợi 20 giây và bấm nút vẽ lại.")
                         else:
-                            st.error(f"Máy chủ HF đang bận (Mã lỗi: {res.status_code}). Vui lòng chọn máy chủ khác.")
+                            # Báo lỗi chi tiết để bắt bệnh nếu HF tiếp tục chặn
+                            err_msg = res.json().get('error', 'Không rõ lỗi') if 'application/json' in res.headers.get('content-type', '') else res.text
+                            st.error(f"HF báo lỗi {res.status_code}: {err_msg}")
 
                     if img_bytes:
                         st.session_state.img_res = img_bytes
