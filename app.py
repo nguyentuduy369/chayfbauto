@@ -247,11 +247,15 @@ with tab3:
                 else:
                     with st.status("🤖 Robot đang thực thi...", expanded=True) as status:
                         try:
-                            st.write("1. Đang khởi tạo môi trường giả lập...")
+                            st.write("1. Đang kiểm tra và tải lõi Trình duyệt (Chỉ chạy lần đầu tiên)...")
+                            import os
+                            # Lệnh ép Streamlit Cloud tải trình duyệt Chromium
+                            os.system("playwright install chromium")
+                            
+                            st.write("2. Đang khởi tạo môi trường giả lập...")
                             from playwright.sync_api import sync_playwright
                             import tempfile
                             
-                            # Hàm chuyển đổi Cookie thô sang chuẩn Playwright
                             def parse_cookies(cookie_string):
                                 cookies = []
                                 for item in cookie_string.split(';'):
@@ -260,30 +264,29 @@ with tab3:
                                         cookies.append({'name': name, 'value': value, 'domain': '.facebook.com', 'path': '/'})
                                 return cookies
 
-                            # Lưu ảnh từ bộ nhớ tạm ra file vật lý để Robot tải lên
                             with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
                                 tmp.write(st.session_state.img_res)
                                 img_path = tmp.name
 
-                            st.write("2. Đang mở trình duyệt và bơm Cookies...")
+                            st.write("3. Đang mở trình duyệt và bơm Cookies...")
                             with sync_playwright() as p:
                                 browser = p.chromium.launch(headless=True)
                                 context = browser.new_context()
                                 context.add_cookies(parse_cookies(acc['cookies']))
                                 page = context.new_page()
 
-                                st.write("3. Đang truy cập Facebook mbasic...")
+                                st.write("4. Đang truy cập Facebook mbasic...")
                                 page.goto("https://mbasic.facebook.com/")
                                 
-                                st.write("4. Đang tải hình ảnh lên...")
+                                st.write("5. Đang tải hình ảnh lên...")
                                 page.click("input[name='view_photo']")
                                 page.set_input_files("input[type='file']", img_path)
                                 page.click("input[name='add_photo_done']")
                                 
-                                st.write("5. Đang nhập nội dung bài viết...")
+                                st.write("6. Đang nhập nội dung bài viết...")
                                 page.fill("textarea[name='xc_message']", st.session_state.content)
                                 
-                                st.write("6. Đang bấm Đăng bài...")
+                                st.write("7. Đang bấm Đăng bài...")
                                 page.click("input[name='view_post']")
                                 
                                 browser.close()
