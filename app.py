@@ -37,9 +37,10 @@ def get_direct_img_url(url):
 # --- LẤY API KEYS ---
 try:
     GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
+    HF_TOKEN = st.secrets["HF_TOKEN"]
     genai.configure(api_key=GEMINI_API_KEY)
 except:
-    st.error("❌ Thiếu GEMINI_API_KEY trong Secrets!")
+    st.error("❌ Thiếu GEMINI_API_KEY hoặc HF_TOKEN trong thiết lập Secrets!")
     st.stop()
 
 # --- QUẢN LÝ DỮ LIỆU ---
