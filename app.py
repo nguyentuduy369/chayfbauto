@@ -206,14 +206,13 @@ with tab1:
         kh = st.text_input("Đối tượng", st.session_state.get('k2', "Giới trẻ Gen Z"))
         tr = st.text_input("Bối cảnh / Trend", st.session_state.get('trend', "Cuộc sống tự do"))
         
-       if st.button("✨ TẠO NỘI DUNG VIRAL", use_container_width=True):
+        if st.button("✨ TẠO NỘI DUNG VIRAL", use_container_width=True):
             with st.spinner("Đang xử lý dữ liệu và viết bài..."):
                 try:
                     q_text = f"Write a viral Facebook personal post for '{sp}' targeting '{kh}' with a '{tr}' vibe, from the perspective of a '{role}'. Under 150 words. Format: [CONTENT] Vietnamese post here ||| [PROMPT] English image prompt here."
                     prompt_data = [q_text]
                     
                     has_image = False
-                    # Kiểm tra xem có Nick và có Ảnh mẫu không
                     if st.session_state.get('selected_fb'):
                         acc = st.session_state.accounts[st.session_state.selected_fb]
                         if acc.get('character_b64'):
@@ -225,7 +224,6 @@ with tab1:
                                 has_image = True
                             except: pass
                     
-                    # Logic dự phòng: Nếu không có ảnh mẫu, AI tự sáng tạo bối cảnh
                     if not has_image:
                         prompt_data[0] += f"\nIMPORTANT VISUAL RULE: Create a highly detailed English image generation prompt describing a realistic scene related to '{sp}' and '{tr}'. The [PROMPT] MUST include: 1) A realistic human character relevant to the topic. 2) STRICT composition: medium environmental portrait shot, 9:16 ratio. STRICTLY NO background blur (Deep Depth of Field). The background MUST tell a story. 3) Append keywords: 'photojournalism style, wide angle lens (20mm), deep depth of field, sharp background, environmental portrait, highly detailed textures, photorealistic, 8k, natural daylight'."
 
