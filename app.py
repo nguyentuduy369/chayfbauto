@@ -420,44 +420,79 @@ with tab1:
         copy_button(st.session_state.content, "📋 Copy Content")
 
 with tab2:
-    st.subheader("🎨 Studio Ảnh (FLUX.1 Schnell)")
-    cl, cr = st.columns([1, 1])
-    with cl:
-        p_final = st.text_area("Xác nhận Lệnh vẽ:", st.session_state.get('prompt',''), height=150)
-        
-        if st.button("🎨 VẼ ẢNH NGAY"):
-            with st.spinner("Đang kết nối FLUX.1 (Cấu hình 9:16)..."):
-                try:
-                    hf_headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-                    model_url = "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell"
-                    
-                    # CẤU HÌNH API MỚI: Ép tỷ lệ 9:16 chính xác bằng cách xác định width/height
-                    # Tương đương: 1024x1820 pixels
-                    payload = {
-                        "inputs": p_final,
-                        "parameters": {
-                            "width": 1024,
-                            "height": 1820
-                        }
-                    }
-                    
-                    res = requests.post(model_url, headers=hf_headers, json=payload, timeout=40)
-                    
-                    if res.status_code == 200:
-                        st.session_state.img_res = res.content
-                        st.success("Tạo ảnh thành công (9:16 chính xác)!")
-                    elif res.status_code == 503: 
-                        st.error("Máy chủ HF đang khởi động model. Vui lòng đợi 20 giây và bấm lại.")
-                    else: 
-                        st.error(f"HF lỗi {res.status_code}")
-                except Exception as e: st.error(f"Lỗi: {e}")
-                
-    with cr:
-        if 'img_res' in st.session_state:
-            st.image(st.session_state.img_res, use_container_width=True)
-            # Thêm nút tải xuống ảnh chuẩn
-            st.download_button("📥 Tải ảnh chuẩn (9:16)", st.session_state.img_res, "viral_post_9_16.png", "image/png")
+    st.markdown('<div class="step-title">BƯỚC 2: STUDIO ẢNH AI 🎨 <span class="arrow-anim">>></span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="step-sub">Biến ý tưởng thành hình ảnh sắc nét với công nghệ FLUX.1 (Bản quyền thương mại).</div>', unsafe_allow_html=True)
 
+    c_img1, c_img2 = st.columns([1.2, 1])
+    
+    with c_img1:
+        st.markdown('<div class="block-title">⚙️ 1. Cấu hình Máy ảnh (Camera Settings)</div>', unsafe_allow_html=True)
+        
+        # Lệnh Prompt kế thừa từ Bước 1
+        p_final = st.text_area("📝 Lệnh Đạo diễn Hình ảnh (Kế thừa từ Bước 1):", st.session_state.get('prompt',''), height=150, help="Bạn có thể chỉnh sửa hoặc thêm mô tả bằng tiếng Anh tại đây.")
+        
+        # Cài đặt nâng cao (Tỷ lệ & Phong cách)
+        col_s1, col_s2 = st.columns(2)
+        with col_s1:
+            ratio = st.selectbox("📐 Tỷ lệ khung hình:", ["9:16 (Video Dọc / Story)", "1:1 (Vuông / Post FB)", "16:9 (Video Ngang / YT)", "4:3 (Tiêu chuẩn ảnh)"])
+        with col_s2:
+            style = st.selectbox("🎭 Phong cách Render:", ["Photorealistic (Đời thực)", "Cinematic (Điện ảnh)", "3D Pixar / Disney", "Anime / Manga", "Watercolor (Màu nước)"])
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🎨 KHỞI ĐỘNG STUDIO VÀ VẼ ẢNH NGAY", type="primary", use_container_width=True):
+            if not p_final.strip():
+                st.error("⚠️ Vui lòng nhập Lệnh Đạo diễn (Prompt) trước khi vẽ!")
+            else:
+                with st.spinner("Đang kết nối Cỗ máy Đồ họa FLUX.1 Schnell... (Vui lòng đợi 10-25 giây)"):
+                    try:
+                        # 1. Thuật toán tự động tính toán Pixel dựa trên Tỷ lệ
+                        w, h = 768, 1344 # Mặc định 9:16
+                        if ratio.startswith("1:1"): w, h = 1024, 1024
+                        elif ratio.startswith("16:9"): w, h = 1344, 768
+                        elif ratio.startswith("4:3"): w, h = 1152, 896
+                        
+                        # 2. Bộ lọc Phong cách (Tự động chèn siêu từ khóa nhiếp ảnh)
+                        style_prompts = {
+                            "Photorealistic (Đời thực)": "masterpiece, highly detailed, photorealistic, 8k resolution, ultra-detailed, RAW photo, highly detailed skin texture",
+                            "Cinematic (Điện ảnh)": "cinematic lighting, dramatic shadows, epic composition, anamorphic lens flare, movie still, volumetric lighting",
+                            "3D Pixar / Disney": "3D render, Pixar style, Disney style, cute, octane render, Unreal Engine 5, smooth lighting",
+                            "Anime / Manga": "anime artwork, Studio Ghibli style, vibrant colors, flat shading, masterpiece, trending on artstation",
+                            "Watercolor (Màu nước)": "watercolor painting, brush strokes, artistic, vibrant, soft edges, masterpiece"
+                        }
+                        final_run_prompt = f"{p_final}, {style_prompts.get(style, '')}"
+
+                        # 3. Kết nối API Hugging Face
+                        hf_headers = {"Authorization": f"Bearer {HF_TOKEN}"}
+                        model_url = "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell"
+                        
+                        payload = {"inputs": final_run_prompt, "parameters": {"width": w, "height": h}}
+                        res = requests.post(model_url, headers=hf_headers, json=payload, timeout=45)
+                        
+                        if res.status_code == 200:
+                            st.session_state.img_res = res.content
+                            st.success("✅ Kết xuất hình ảnh thành công!")
+                        elif res.status_code == 503: 
+                            st.error("⚠️ Máy chủ Đồ họa đang khởi động. Vui lòng đợi 20 giây và bấm lại.")
+                        else: 
+                            st.error(f"❌ Lỗi máy chủ (Mã: {res.status_code}).")
+                    except Exception as e: st.error(f"Lỗi kết nối: {e}")
+
+    with c_img2:
+        st.markdown('<div class="block-title">🖼️ 2. Màn hình Kiểm duyệt (Preview)</div>', unsafe_allow_html=True)
+        
+        # Nếu đã có ảnh thì hiển thị, chưa có thì hiển thị khung đứt nét chuyên nghiệp
+        if 'img_res' in st.session_state and st.session_state.img_res:
+            st.image(st.session_state.img_res, use_container_width=True, caption=f"Tỷ lệ: {ratio.split(' ')[0]} | Phong cách: {style.split(' ')[0]}")
+            st.download_button("📥 TẢI CHẤT LƯỢNG CAO (Không Logo)", st.session_state.img_res, "viralsync_pro_image.png", "image/png", use_container_width=True)
+            st.info("👉 Vuốt sang Bước 3 để lên lịch hoặc đăng bài tự động.")
+        else:
+            st.markdown("""
+            <div style="border: 3px dashed #E5E7EB; border-radius: 12px; padding: 60px 20px; text-align: center; color: #9CA3AF; background-color: #F9FAFB;">
+                <h3 style="margin-bottom: 10px; color: #6B7280;">Chưa có dữ liệu hình ảnh</h3>
+                <p style="font-size: 14px;">Hãy kiểm tra Lệnh đạo diễn và bấm Khởi động Studio ở khung bên trái để xem kết quả tại đây.</p>
+                <div style="font-size: 40px; margin-top: 15px;">📸</div>
+            </div>
+            """, unsafe_allow_html=True)
 with tab3:
     st.header("📤 Trạm Xuất Bản Nội Dung (Smart Compliance Hub)")
     
