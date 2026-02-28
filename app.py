@@ -96,34 +96,35 @@ def image_to_base64(uploaded_file):
 if 'accounts' not in st.session_state: st.session_state.accounts = load_json('accounts.json')
 if 'fanpages' not in st.session_state: st.session_state.fanpages = load_json('fanpages.json')
 
-# --- SIDEBAR: GIAO DIỆN SAAS CỘNG ĐỒNG ---
+# --- SIDEBAR: GIAO DIỆN VIRALSYNC PRO ---
 with st.sidebar:
-    # --- TÊN ỨNG DỤNG & ĐỊNH VỊ ---
-    st.header("⚡ OmniContent AI") # Bạn có thể đổi tên tại đây
-    st.caption("🚀 All-in-One Content & SEO Assistant (Bản Demo)")
+    # --- TÊN ỨNG DỤNG & LOGO ---
+    st.markdown("""
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #6C63FF; margin-bottom: 0;">🚀 ViralSync Pro</h1>
+            <p style="color: #888; font-size: 14px; margin-top: 5px;">All-in-One Content & SEO Assistant</p>
+        </div>
+    """, unsafe_allow_html=True)
     
-    # --- 1. BỘ ĐẾM TRUY CẬP (Bắt đầu từ 300) ---
+    # --- 1. BỘ ĐẾM TRUY CẬP ---
     stats_file = 'stats.json'
     if not os.path.exists(stats_file): save_json({"visitors": 300}, stats_file)
     stats = load_json(stats_file)
     
-    # Ép bộ đếm luôn lớn hơn hoặc bằng 300
-    if stats.get("visitors", 0) < 300: 
-        stats["visitors"] = 300
-        
+    if stats.get("visitors", 0) < 300: stats["visitors"] = 300
     if 'visited' not in st.session_state:
         stats['visitors'] += 1
         save_json(stats, stats_file)
         st.session_state.visited = True
         
-    st.metric("👁️ Lượt truy cập hệ thống", f"{stats['visitors']:,} users")
+    st.markdown(f"**👁️ Lượt truy cập:** `{stats['visitors']:,}`")
     st.divider()
 
-    # --- 2. DỮ LIỆU THỊ GIÁC (Nhiều Slot Tham Chiếu) ---
-    st.subheader("📸 Dữ Liệu Tham Chiếu")
-    st.caption("Tải ảnh để AI đồng bộ khuôn mặt & bối cảnh.")
+    # --- 2. Ý TƯỞNG MINH HỌA (Đóng mặc định) ---
+    st.subheader("📸 Ý Tưởng Minh Họa")
+    st.caption("(Mở ra khu vực bên dưới hỗ trợ đồng bộ ảnh khuôn mặt bối cảnh nhân vật)")
     
-    with st.expander("Mở rộng khu vực Tải ảnh", expanded=True):
+    with st.expander("Cuộn Knowled - Tạo Ảnh", expanded=False):
         st.session_state.char1_b64 = image_to_base64(st.file_uploader("Nhân vật 1 (Chính):", type=['jpg', 'png'], key="c1"))
         st.session_state.char2_b64 = image_to_base64(st.file_uploader("Nhân vật 2 (Phụ):", type=['jpg', 'png'], key="c2"))
         st.session_state.pet_b64 = image_to_base64(st.file_uploader("Thú cưng:", type=['jpg', 'png'], key="pet"))
@@ -131,43 +132,71 @@ with st.sidebar:
 
     st.divider()
     
-    # --- 3. MỞ NHANH NỀN TẢNG (Giao diện Icon lưới gọn gàng) ---
-    st.subheader("🌐 Mở Nhanh Nền Tảng")
-    
-    # Dùng CSS để tạo các nút bấm icon gọn gàng xếp thành 2 cột
-    btn_style = "display:block; width:100%; border-radius:8px; color:white; border:none; padding:8px 0; text-align:center; font-weight:bold; text-decoration:none; margin-bottom:10px; font-size:14px;"
-    
-    c_p1, c_p2 = st.columns(2)
-    with c_p1:
-        st.markdown(f'<a href="https://facebook.com" target="_blank" style="{btn_style} background:#0866FF;">📘 Facebook</a>', unsafe_allow_html=True)
-        st.markdown(f'<a href="https://youtube.com" target="_blank" style="{btn_style} background:#FF0000;">▶️ YouTube</a>', unsafe_allow_html=True)
-        st.markdown(f'<a href="https://threads.net" target="_blank" style="{btn_style} background:#000000;">🧵 Threads</a>', unsafe_allow_html=True)
-        st.markdown(f'<a href="https://zalo.me" target="_blank" style="{btn_style} background:#0068FF;">💬 Zalo Web</a>', unsafe_allow_html=True)
-    with c_p2:
-        st.markdown(f'<a href="https://tiktok.com" target="_blank" style="{btn_style} background:#000000;">🎵 TikTok</a>', unsafe_allow_html=True)
-        st.markdown(f'<a href="https://instagram.com" target="_blank" style="{btn_style} background:#E1306C;">📸 Instagram</a>', unsafe_allow_html=True)
-        st.markdown(f'<a href="https://web.telegram.org" target="_blank" style="{btn_style} background:#24A1DE;">✈️ Telegram</a>', unsafe_allow_html=True)
-        st.markdown(f'<a href="https://web.whatsapp.com" target="_blank" style="{btn_style} background:#25D366;">📞 WhatsApp</a>', unsafe_allow_html=True)
+    # --- 3. LIÊN KẾT ĐA NỀN TẢNG (Icon chuyên nghiệp) ---
+    st.subheader("🌐 Liên Kết Đa Nền Tảng")
+    # Sử dụng Icon chất lượng cao từ CDN
+    icon_css = """
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 15px;">
+        <a href="https://facebook.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/124/124010.png" width="40" title="Facebook"></a>
+        <a href="https://youtube.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" width="40" title="YouTube"></a>
+        <a href="https://tiktok.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/3046/3046121.png" width="40" title="TikTok"></a>
+        <a href="https://instagram.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" width="40" title="Instagram"></a>
+        <a href="https://threads.net" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/11820/11820089.png" width="40" title="Threads"></a>
+        <a href="https://web.whatsapp.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/733/733585.png" width="40" title="WhatsApp"></a>
+    </div>
+    """
+    st.markdown(icon_css, unsafe_allow_html=True)
+
+    # --- 5. CHUYỂN NHANH ZALO / TELEGRAM ---
+    c_zl, c_tl = st.columns(2)
+    with c_zl: st.markdown('<a href="https://zalo.me/0586999991" target="_blank"><button style="width:100%; border-radius:5px; background:#0068FF; color:white; border:none; padding:8px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Icon_of_Zalo.svg/1200px-Icon_of_Zalo.svg.png" width="18"> Zalo</button></a>', unsafe_allow_html=True)
+    with c_tl: st.markdown('<a href="https://t.me/ntd934924200" target="_blank"><button style="width:100%; border-radius:5px; background:#24A1DE; color:white; border:none; padding:8px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111646.png" width="18"> Telegram</button></a>', unsafe_allow_html=True)
 
     st.divider()
     
-    # --- 4. HỖ TRỢ & GÓP Ý ---
-    st.subheader("💬 Hỗ Trợ Kỹ Thuật")
-    st.caption("Báo lỗi hoặc cần hỗ trợ? Liên hệ trực tiếp Dev:")
+    # --- 4. MONG LỜI BÌNH ĐÁNH GIÁ (Gửi về Telegram) ---
+    st.subheader("⭐ Mong Lời Bình Đánh Giá")
+    st.caption("Hãy gửi đánh giá, đóng góp, ý kiến của bạn vào hộp thoại bên dưới để chúng tôi hoàn thiện ViralSync Pro tốt hơn.")
     
-    c_zl, c_tl = st.columns(2)
-    with c_zl: st.markdown(f'<a href="https://zalo.me/0586999991" target="_blank" style="{btn_style} background:#0068FF;">💬 Zalo</a>', unsafe_allow_html=True)
-    with c_tl: st.markdown(f'<a href="https://t.me/ntd934924200" target="_blank" style="{btn_style} background:#24A1DE;">✈️ Telegram</a>', unsafe_allow_html=True)
+    rating = st.radio("Đánh giá sao:", ["⭐⭐⭐⭐⭐ Tuyệt vời", "⭐⭐⭐⭐ Tốt", "⭐⭐⭐ Khá", "⭐⭐ Tệ", "⭐ Rất tệ"], horizontal=False)
+    feedback_text = st.text_area("Ý kiến của bạn:", placeholder="Gõ góp ý vào đây...", height=80)
     
-    # --- 5. DONATE / ỦNG HỘ ---
+    if st.button("🚀 Gửi Đánh Giá", use_container_width=True):
+        if feedback_text.strip():
+            with st.spinner("Đang gửi..."):
+                try:
+                    # Gửi API qua Telegram (BẠN CẦN ĐIỀN THÊM BOT TOKEN VÀ CHAT ID CỦA BẠN VÀO 2 BIẾN DƯỚI)
+                    bot_token = "8681696911:AAHiyQUGMzWRkOuOVtiXsu-2VYegfzP0_og"
+                    chat_id = "7823053892"
+                    
+                    msg = f"🌟 ĐÁNH GIÁ VIRALSYNC PRO:\n- Mức độ: {rating}\n- Ý kiến: {feedback_text}"
+                    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+                    
+                    # Nếu chưa nhập Token thì giả lập thành công để test UI
+                    if bot_token == "8681696911:AAHiyQUGMzWRkOuOVtiXsu-2VYegfzP0_og":
+                        st.success("Cảm ơn bạn! (Đang chạy ở chế độ Demo UI)")
+                    else:
+                        requests.post(url, json={"chat_id": chat_id, "text": msg}, timeout=5)
+                        st.success("Đã gửi đánh giá thành công tới Admin!")
+                except Exception as e:
+                    st.error("Có lỗi xảy ra khi gửi.")
+        else:
+            st.warning("Vui lòng nhập nội dung ý kiến trước khi gửi nhé!")
+
     st.divider()
-    st.markdown("💖 **Tiếp lửa cho dự án (Donate)**")
-    st.info("""
-    **Ngân hàng ACB**
-    STK: **555868686**
-    
-    *Mọi sự ủng hộ của bạn đều giúp duy trì máy chủ cho cộng đồng!*
-    """)
+
+    # --- 6. DONATE / ỦNG HỘ ---
+    donate_html = """
+    <div style="background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); padding: 15px; border-radius: 10px; text-align: center; color: #333; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <h4 style="margin: 0 0 10px 0; color: #c0392b;">💖 Tiếp Lửa Cho Dự Án</h4>
+        <p style="font-size: 13px; margin-bottom: 10px; font-weight: 500;">Mỗi cốc trà sữa đều là động lực cho Teams</p>
+        <div style="background: white; padding: 10px; border-radius: 8px; display: inline-block;">
+            <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-ACB.png" width="60" style="vertical-align: middle; margin-right: 8px;">
+            <span style="font-size: 18px; font-weight: 900; letter-spacing: 1px; vertical-align: middle;">555868686</span>
+        </div>
+    </div>
+    """
+    st.markdown(donate_html, unsafe_allow_html=True)
 # --- MAIN ---
 st.title("🚀 Smart Automation Hub - Nền Tảng")
 tab1, tab2, tab3 = st.tabs(["📝 Bước 1: Content", "🎨 Bước 2: Ảnh AI (Imagen 3)", "📤 Bước 3: Đăng Bài"])
