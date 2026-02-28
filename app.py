@@ -96,6 +96,9 @@ def image_to_base64(uploaded_file):
 if 'accounts' not in st.session_state: st.session_state.accounts = load_json('accounts.json')
 if 'fanpages' not in st.session_state: st.session_state.fanpages = load_json('fanpages.json')
 
+import urllib.parse
+import requests
+
 # --- SIDEBAR: GIAO DIỆN VIRALSYNC PRO ---
 with st.sidebar:
     # --- TÊN ỨNG DỤNG & LOGO ---
@@ -122,7 +125,7 @@ with st.sidebar:
 
     # --- 2. Ý TƯỞNG MINH HỌA (Đóng mặc định) ---
     st.subheader("📸 Ý Tưởng Minh Họa")
-    st.caption("(Mở ra khu vực bên dưới hỗ trợ đồng bộ ảnh khuôn mặt bối cảnh nhân vật)")
+    st.caption("Mở ra khu vực bên dưới hỗ trợ đồng bộ ảnh khuôn mặt bối cảnh nhân vật.")
     
     with st.expander("Cuộn Knowled - Tạo Ảnh", expanded=False):
         st.session_state.char1_b64 = image_to_base64(st.file_uploader("Nhân vật 1 (Chính):", type=['jpg', 'png'], key="c1"))
@@ -132,54 +135,84 @@ with st.sidebar:
 
     st.divider()
     
-    # --- 3. LIÊN KẾT ĐA NỀN TẢNG (Icon chuyên nghiệp) ---
+    # --- 3. LIÊN KẾT ĐA NỀN TẢNG (Hiệu ứng Băng chuyền vô cực) ---
     st.subheader("🌐 Liên Kết Đa Nền Tảng")
-    # Sử dụng Icon chất lượng cao từ CDN
-    icon_css = """
-    <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 15px;">
-        <a href="https://facebook.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/124/124010.png" width="40" title="Facebook"></a>
-        <a href="https://youtube.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" width="40" title="YouTube"></a>
-        <a href="https://tiktok.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/3046/3046121.png" width="40" title="TikTok"></a>
-        <a href="https://instagram.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" width="40" title="Instagram"></a>
-        <a href="https://threads.net" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/11820/11820089.png" width="40" title="Threads"></a>
-        <a href="https://web.whatsapp.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/733/733585.png" width="40" title="WhatsApp"></a>
+    
+    marquee_html = """
+    <style>
+    .marquee-container {
+        width: 100%; overflow: hidden; white-space: nowrap; box-sizing: border-box; 
+        background: #f0f2f6; padding: 10px 0; border-radius: 10px; margin-bottom: 15px;
+    }
+    .marquee-content {
+        display: inline-block; animation: marquee 12s linear infinite;
+    }
+    .marquee-content:hover { animation-play-state: paused; } /* Dừng lại khi di chuột vào */
+    .marquee-content img { width: 32px; margin: 0 8px; border-radius: 8px; transition: transform 0.2s; cursor: pointer; }
+    .marquee-content img:hover { transform: scale(1.2); }
+    @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-50%, 0); } }
+    </style>
+    <div class="marquee-container">
+        <div class="marquee-content">
+            <a href="https://facebook.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/124/124010.png" title="Facebook"></a>
+            <a href="https://tiktok.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/3046/3046121.png" title="TikTok"></a>
+            <a href="https://youtube.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" title="YouTube"></a>
+            <a href="https://instagram.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" title="Instagram"></a>
+            <a href="https://shopee.vn" target="_blank"><img src="https://images.squarespace-cdn.com/content/v1/53883795e4b016c956b8d243/1597816174880-PWHGEU9OMHDF8Y7KOTK6/shopee-logo-40483.png" title="Shopee"></a>
+            <a href="https://threads.net" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/11820/11820089.png" title="Threads"></a>
+            <a href="https://facebook.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/124/124010.png" title="Facebook"></a>
+            <a href="https://tiktok.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/3046/3046121.png" title="TikTok"></a>
+            <a href="https://youtube.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" title="YouTube"></a>
+            <a href="https://instagram.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" title="Instagram"></a>
+            <a href="https://shopee.vn" target="_blank"><img src="https://images.squarespace-cdn.com/content/v1/53883795e4b016c956b8d243/1597816174880-PWHGEU9OMHDF8Y7KOTK6/shopee-logo-40483.png" title="Shopee"></a>
+            <a href="https://threads.net" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/11820/11820089.png" title="Threads"></a>
+        </div>
     </div>
     """
-    st.markdown(icon_css, unsafe_allow_html=True)
+    st.markdown(marquee_html, unsafe_allow_html=True)
+    st.divider()
 
-    # --- 5. CHUYỂN NHANH ZALO / TELEGRAM ---
+    # --- 4. HỖ TRỢ KỸ THUẬT 24/24 (Tách riêng) ---
+    st.subheader("🛠️ Hỗ Trợ Kỹ Thuật 24/24")
+    btn_style = "display:block; width:100%; border-radius:5px; color:white; border:none; padding:8px; text-align:center; font-weight:bold; text-decoration:none; margin-bottom:10px; font-size:14px; display:flex; align-items:center; justify-content:center; gap:8px;"
+    
     c_zl, c_tl = st.columns(2)
-    with c_zl: st.markdown('<a href="https://zalo.me/0586999991" target="_blank"><button style="width:100%; border-radius:5px; background:#0068FF; color:white; border:none; padding:8px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Icon_of_Zalo.svg/1200px-Icon_of_Zalo.svg.png" width="18"> Zalo</button></a>', unsafe_allow_html=True)
-    with c_tl: st.markdown('<a href="https://t.me/ntd934924200" target="_blank"><button style="width:100%; border-radius:5px; background:#24A1DE; color:white; border:none; padding:8px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111646.png" width="18"> Telegram</button></a>', unsafe_allow_html=True)
-
+    with c_zl: st.markdown(f'<a href="https://zalo.me/0586999991" target="_blank" style="{btn_style} background:#0068FF;"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Icon_of_Zalo.svg/1200px-Icon_of_Zalo.svg.png" width="16"> Zalo</a>', unsafe_allow_html=True)
+    with c_tl: st.markdown(f'<a href="https://t.me/ntd934924200" target="_blank" style="{btn_style} background:#24A1DE;"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111646.png" width="16"> Telegram</a>', unsafe_allow_html=True)
     st.divider()
     
-    # --- 4. MONG LỜI BÌNH ĐÁNH GIÁ (Gửi về Telegram) ---
+    # --- 5. MONG LỜI BÌNH ĐÁNH GIÁ (Widget Ngôi sao 1 dòng) ---
     st.subheader("⭐ Mong Lời Bình Đánh Giá")
     st.caption("Hãy gửi đánh giá, đóng góp, ý kiến của bạn vào hộp thoại bên dưới để chúng tôi hoàn thiện ViralSync Pro tốt hơn.")
     
-    rating = st.radio("Đánh giá sao:", ["⭐⭐⭐⭐⭐ Tuyệt vời", "⭐⭐⭐⭐ Tốt", "⭐⭐⭐ Khá", "⭐⭐ Tệ", "⭐ Rất tệ"], horizontal=False)
-    feedback_text = st.text_area("Ý kiến của bạn:", placeholder="Gõ góp ý vào đây...", height=80)
+    # Tính năng st.feedback mới của Streamlit (Tạo thanh 5 sao ngang tương tác cực xịn)
+    rating_val = st.feedback("stars")
+    feedback_text = st.text_area("Ý kiến của bạn:", placeholder="Gõ góp ý vào đây...", height=80, label_visibility="collapsed")
     
     if st.button("🚀 Gửi Đánh Giá", use_container_width=True):
         if feedback_text.strip():
-            with st.spinner("Đang gửi..."):
+            with st.spinner("Đang truyền tín hiệu..."):
                 try:
-                    # Gửi API qua Telegram (BẠN CẦN ĐIỀN THÊM BOT TOKEN VÀ CHAT ID CỦA BẠN VÀO 2 BIẾN DƯỚI)
-                    bot_token = "8681696911:AAHiyQUGMzWRkOuOVtiXsu-2VYegfzP0_og"
-                    chat_id = "7823053892"
+                    # BẠN ĐIỀN THÔNG TIN BOT VÀO ĐÂY:
+                    bot_token = "YOUR_TELEGRAM_BOT_TOKEN"
+                    chat_id = "YOUR_TELEGRAM_CHAT_ID"
                     
-                    msg = f"🌟 ĐÁNH GIÁ VIRALSYNC PRO:\n- Mức độ: {rating}\n- Ý kiến: {feedback_text}"
-                    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+                    # Chuyển đổi số sao (0-4) thành text
+                    star_text = "Chưa chọn sao" if rating_val is None else "⭐" * (rating_val + 1)
                     
-                    # Nếu chưa nhập Token thì giả lập thành công để test UI
-                    if bot_token == "8681696911:AAHiyQUGMzWRkOuOVtiXsu-2VYegfzP0_og":
-                        st.success("Cảm ơn bạn! (Đang chạy ở chế độ Demo UI)")
+                    msg = f"🌟 ĐÁNH GIÁ VIRALSYNC PRO:\n- Mức độ: {star_text}\n- Ý kiến: {feedback_text}"
+                    safe_msg = urllib.parse.quote(msg)
+                    
+                    # Dùng URL GET trực tiếp để tránh lỗi JSON của Streamlit
+                    url = f"https://api.telegram.org/bot{bot_token}/sendMessage?chat_id={chat_id}&text={safe_msg}"
+                    res = requests.get(url, timeout=10)
+                    
+                    if res.status_code == 200:
+                        st.success("Cảm ơn bạn! Đánh giá đã được gửi trực tiếp đến Admin.")
                     else:
-                        requests.post(url, json={"chat_id": chat_id, "text": msg}, timeout=5)
-                        st.success("Đã gửi đánh giá thành công tới Admin!")
+                        st.error(f"Telegram API từ chối: Cấu hình Bot Token hoặc Chat ID chưa đúng.")
                 except Exception as e:
-                    st.error("Có lỗi xảy ra khi gửi.")
+                    st.error(f"Có lỗi đường truyền: {e}")
         else:
             st.warning("Vui lòng nhập nội dung ý kiến trước khi gửi nhé!")
 
