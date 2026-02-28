@@ -175,7 +175,7 @@ with tab1:
                     q_text = f"Write a viral Facebook personal post for {sp} targeting {kh} with a {tr} vibe. Under 150 words. Format: [CONTENT] Vietnamese post here ||| [PROMPT] English image prompt here."
                     prompt_data = [q_text]
                     
-                    # Gemini lấy ảnh từ Sidebar để phân tích khuôn mặt nhân vật
+                    # CƠ CHẾ PROMPT MỚI: Ép kết hợp Nhân vật + Bối cảnh
                     if st.session_state.get('selected_fb'):
                         acc = st.session_state.accounts[st.session_state.selected_fb]
                         if acc.get('character_b64'):
@@ -183,7 +183,7 @@ with tab1:
                                 img_data = base64.b64decode(acc['character_b64'].split(',')[1])
                                 char_img = Image.open(io.BytesIO(img_data))
                                 prompt_data.append(char_img)
-                                prompt_data[0] += "\nIMPORTANT: I attached a reference image of the character. Analyze their appearance deeply and write a highly detailed physical description in the [PROMPT] section so the image AI can replicate them perfectly."
+                                prompt_data[0] += f"\nIMPORTANT VISUAL RULE: I attached a reference image of the main character. The [PROMPT] section MUST be a single cohesive English paragraph that includes: 1) A highly detailed physical description of this person (face, hair, clothing) based on the attached image. 2) Place this exact character in a realistic, professional setting or action related to '{sp}' and the vibe of '{tr}'. Do NOT just describe the person, you MUST describe what they are doing in that specific environment."
                             except: pass
                     
                     res = generate_with_key_rotation(prompt_data)
